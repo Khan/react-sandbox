@@ -25,33 +25,52 @@ const SinglePropEditor = React.createClass({
         onChange: RP.func.isRequired,
     },
 
-    render() {
-        const {name, value, type, onChange} = this.props;
-
-        let content = "";
-
-        // TODO(jlfwong): Editing
-        // TODO(jlfwong): Adding to lists
-        // TODO(jlfwong): Adding to objectOf
-        // TODO(jlfwong): Nullability
-        // TODO(jlfwong): The rest of the proptypes
-        // TODO(jlfwong): Drag to re-arrange in arrays
-
-        if (type.type === "string") {
-            content = <input
+    FIELD_RENDERERS: {
+        string: ({value, onChange}) => {
+            return <input
                 className={css(styles.stringInput)}
                 type="text"
-                defaultValue={value}
+                value={value}
                 onChange={(ev) => onChange(ev.target.value)}
             />;
-        } else if (type.type === "arrayOf") {
+        },
+
+        bool: ({value, onChange}) => {
+            return <input
+                type="checkbox"
+                checked={value}
+                onChange={(ev) => onChange(ev.target.checked)}
+            />;
+        },
+
+        number: ({value, onChange}) => {
+            return <input
+                type="number"
+                value={value}
+                onChange={(ev) => onChange(parseFloat(ev.target.value, 10))}
+            />;
+        },
+
+        oneOf: ({type, value, onChange}) => {
+            return <select
+                value={value}
+                onChange={(ev) => onChange(ev.target.value)}
+            >
+                {type.args[0].map(option => {
+                    return <option key={option} value={option}>
+                        {option}
+                    </option>
+                })}
+            </select>;
+        },
+
+        arrayOf: ({name, value, type, onChange}) => {
             const arrayVal = value || [];
 
             // TODO(jlfwong): Add ability to add or remove values
-            content = arrayVal.map((item, index) => {
-                return <div className={css(styles.nestedProp)}>
+            return arrayVal.map((item, index) => {
+                return <div className={css(styles.nestedProp)} key={index}>
                     <SinglePropEditor
-                        key={index}
                         name={`${name}[${index}]`}
                         type={type.args[0]}
                         value={item}
@@ -62,14 +81,15 @@ const SinglePropEditor = React.createClass({
                         }}
                     />
                 </div>;
-            }).concat([<button>Add to {name}</button>]);
-        } else if (type.type === "shape") {
+            }).concat([<button key='add'>Add to {name}</button>]);
+        },
+
+        shape: ({name, value, type, onChange}) => {
             const shape = type.args[0];
             const objVal = value || {};
-            content = Object.keys(shape).map((childKey) => {
-                return <div className={css(styles.nestedProp)}>
+            return Object.keys(shape).map((childKey) => {
+                return <div className={css(styles.nestedProp)} key={childKey}>
                     <SinglePropEditor
-                        key={childKey}
                         name={`${name}.${childKey}`}
                         type={shape[childKey]}
                         value={objVal[childKey]}
@@ -82,15 +102,30 @@ const SinglePropEditor = React.createClass({
                     />
                 </div>;
             });
-        } else {
-            content = JSON.stringify(value);
-        }
+        },
+
+        json: ({ value, onChange}) => {
+            return JSON.stringify(value);
+        },
+    },
+
+    render() {
+        const {name, type} = this.props;
+
+        // TODO(jlfwong): Editing
+        // TODO(jlfwong): Adding to lists
+        // TODO(jlfwong): Adding to objectOf
+        // TODO(jlfwong): Nullability
+        // TODO(jlfwong): The rest of the proptypes
+        // TODO(jlfwong): Drag to re-arrange in arrays
+
+        const inputType = this.FIELD_RENDERERS[type.type] ? type.type : 'json';
 
         return <div className={css(styles.singleField)}>
             <span className={css(styles.nameLabel)}>
                 {name}
             </span>
-            {content}
+            {this.FIELD_RENDERERS[inputType](this.props)}
         </div>
     },
 });

@@ -13,7 +13,11 @@ const findByTag = TestUtils.findRenderedDOMComponentWithTag;
 const scryByTag = TestUtils.scryRenderedDOMComponentsWithTag;
 
 const change = (input, value) => {
-    input.value = value;
+    if (input.type === 'checkbox' || input.type === 'radio') {
+        input.checked = value;
+    } else {
+        input.value = value;
+    }
     TestUtils.Simulate.change(input);
 };
 
@@ -56,6 +60,24 @@ describe('SinglePropEditor', () => {
         const component = render(RP.string);
         const input = findByTag(component, 'input');
         assertChange(input, 'hello', 'hello')
+    });
+
+    it('can edit fields with React.PropTypes.number', () => {
+        const component = render(RP.number, 1);
+        const input = findByTag(component, 'input');
+        assertChange(input, 10, 10)
+    });
+
+    it('can edit fields with React.PropTypes.bool', () => {
+        const component = render(RP.bool);
+        const input = findByTag(component, 'input');
+        assertChange(input, true, true)
+    });
+
+    it('can edit fields with React.PropTypes.oneOf', () => {
+        const component = render(RP.oneOf(['a', 'b']));
+        const input = findByTag(component, 'select');
+        assertChange(input, 'a', 'a')
     });
 
     it('can edit fields within React.PropTypes.arrayOf(...)', () => {
