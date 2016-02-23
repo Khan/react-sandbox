@@ -6,6 +6,102 @@ const { inferTypes } = require("./prop-type-tools.js");
 
 const RP = React.PropTypes;
 
+const FIELD_RENDERERS = (() => {
+    const string = ({value, onChange}) => {
+        return <input
+            className={css(styles.stringInput)}
+            type="text"
+            value={value}
+            onChange={(ev) => onChange(ev.target.value)}
+        />;
+    };
+
+    const bool = ({value, onChange}) => {
+        return <input
+            type="checkbox"
+            checked={value}
+            onChange={(ev) => onChange(ev.target.checked)}
+        />;
+    };
+
+    const number = ({value, onChange}) => {
+        return <input
+            type="number"
+            value={value}
+            onChange={(ev) => onChange(parseFloat(ev.target.value, 10))}
+        />;
+    };
+
+    const oneOf = ({type, value, onChange}) => {
+        return <select
+            value={value}
+            onChange={(ev) => onChange(ev.target.value)}
+        >
+            {type.args[0].map(option => {
+                return <option key={option} value={option}>
+                    {option}
+                </option>
+            })}
+        </select>;
+    };
+
+    const arrayOf = ({name, value, type, onChange}) => {
+        const arrayVal = value || [];
+
+        // TODO(jlfwong): Add ability to add or remove values
+        return arrayVal.map((item, index) => {
+            return <div className={css(styles.nestedProp)} key={index}>
+                <SinglePropEditor
+                    name={`${name}[${index}]`}
+                    type={type.args[0]}
+                    value={item}
+                    onChange={newVal => {
+                        onChange(arrayVal.slice(0, index)
+                                    .concat([newVal])
+                                    .concat(arrayVal.slice(index + 1)));
+                    }}
+                />
+            </div>;
+        }).concat([<button key='add'>Add to {name}</button>]);
+    };
+
+    const shape = ({name, value, type, onChange}) => {
+        const shape = type.args[0];
+        const objVal = value || {};
+        return Object.keys(shape).map((childKey) => {
+            return <div className={css(styles.nestedProp)} key={childKey}>
+                <SinglePropEditor
+                    name={`${name}.${childKey}`}
+                    type={shape[childKey]}
+                    value={objVal[childKey]}
+                    onChange={newVal => {
+                        onChange({
+                            ...objVal,
+                            [childKey]: newVal
+                        });
+                    }}
+                />
+            </div>;
+        });
+    };
+
+    const json = ({value, onChange}) => {
+        return JSON.stringify(value);
+    };
+
+    return {
+        string,
+        node: string,
+        element: string,
+        bool,
+        number,
+        oneOf,
+        arrayOf,
+        shape,
+        json
+    };
+})();
+
 const SinglePropEditor = React.createClass({
     propTypes: {
         // The type of the prop to edit. This will match the values of return
@@ -25,90 +121,6 @@ const SinglePropEditor = React.createClass({
         onChange: RP.func.isRequired,
     },
 
-    FIELD_RENDERERS: {
-        string: ({value, onChange}) => {
-            return <input
-                className={css(styles.stringInput)}
-                type="text"
-                value={value}
-                onChange={(ev) => onChange(ev.target.value)}
-            />;
-        },
-
-        bool: ({value, onChange}) => {
-            return <input
-                type="checkbox"
-                checked={value}
-                onChange={(ev) => onChange(ev.target.checked)}
-            />;
-        },
-
-        number: ({value, onChange}) => {
-            return <input
-                type="number"
-                value={value}
-                onChange={(ev) => onChange(parseFloat(ev.target.value, 10))}
-            />;
-        },
-
-        oneOf: ({type, value, onChange}) => {
-            return <select
-                value={value}
-                onChange={(ev) => onChange(ev.target.value)}
-            >
-                {type.args[0].map(option => {
-                    return <option key={option} value={option}>
-                        {option}
-                    </option>
-                })}
-            </select>;
-        },
-
-        arrayOf: ({name, value, type, onChange}) => {
-            const arrayVal = value || [];
-
-            // TODO(jlfwong): Add ability to add or remove values
-            return arrayVal.map((item, index) => {
-                return <div className={css(styles.nestedProp)} key={index}>
-                    <SinglePropEditor
-                        name={`${name}[${index}]`}
-                        type={type.args[0]}
-                        value={item}
-                        onChange={newVal => {
-                            onChange(arrayVal.slice(0, index)
-                                        .concat([newVal])
-                                        .concat(arrayVal.slice(index + 1)));
-                        }}
-                    />
-                </div>;
-            }).concat([<button key='add'>Add to {name}</button>]);
-        },
-
-        shape: ({name, value, type, onChange}) => {
-            const shape = type.args[0];
-            const objVal = value || {};
-            return Object.keys(shape).map((childKey) => {
-                return <div className={css(styles.nestedProp)} key={childKey}>
-                    <SinglePropEditor
-                        name={`${name}.${childKey}`}
-                        type={shape[childKey]}
-                        value={objVal[childKey]}
-                        onChange={newVal => {
-                            onChange({
-                                ...objVal,
-                                [childKey]: newVal
-                            });
-                        }}
-                    />
-                </div>;
-            });
-        },
-
-        json: ({ value, onChange}) => {
-            return JSON.stringify(value);
-        },
-    },
-
     render() {
         const {name, type} = this.props;
 
@@ -119,13 +131,13 @@ const SinglePropEditor = React.createClass({
         // TODO(jlfwong): The rest of the proptypes
         // TODO(jlfwong): Drag to re-arrange in arrays
 
-        const inputType = this.FIELD_RENDERERS[type.type] ? type.type : 'json';
+        const inputType = FIELD_RENDERERS[type.type] ? type.type : 'json';
 
         return <div className={css(styles.singleField)}>
             <span className={css(styles.nameLabel)}>
                 {name}
             </span>
-            {this.FIELD_RENDERERS[inputType](this.props)}
+            {FIELD_RENDERERS[inputType](this.props)}
         </div>
     },
 });

@@ -62,8 +62,14 @@ describe('SinglePropEditor', () => {
         assertChange(input, 'hello', 'hello')
     });
 
-    it('can edit fields with React.PropTypes.number', () => {
-        const component = render(RP.number, 1);
+    it('can edit fields with React.PropTypes.element', () => {
+        const component = render(RP.element);
+        const input = findByTag(component, 'input');
+        assertChange(input, 'hello', 'hello')
+    });
+
+    it('can edit fields with React.PropTypes.node', () => {
+        const component = render(RP.node, 1);
         const input = findByTag(component, 'input');
         assertChange(input, 10, 10)
     });
