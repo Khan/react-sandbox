@@ -44,60 +44,59 @@ describe('createSandboxStore', () => {
     });
 
     const assertStore = (expected) => {
-        assert.deepEqual(store.getState(), expected);
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                assert.deepEqual(store.getState(), expected);
+                resolve();
+            }, 0);
+        });
     };
 
     it('initializes sensibly', () => {
-        assertStore({
+        return assertStore({
             componentList: null,
             selectedComponent: null
         });
     });
 
-    it('can load components', (done) => {
+    it('can load components', () => {
         store.dispatch(actions.loadComponentList(getComponentList));
 
-        assertStore({
+        return assertStore({
             componentList: null,
             selectedComponent: null
-        });
+        }).then(() => {
+            resolveComponentList([
+                ['big-spinner.jsx', 'BigSpinner'],
+                ['small-spinner.jsx', 'SmallSpinner']
+            ]);
 
-        resolveComponentList([
-            ['big-spinner.jsx', 'BigSpinner'],
-            ['small-spinner.jsx', 'SmallSpinner']
-        ]);
-
-        setTimeout(function() {
-            assertStore({
+            return assertStore({
                 componentList: [
                     ['big-spinner.jsx', 'BigSpinner'],
                     ['small-spinner.jsx', 'SmallSpinner']
                 ],
                 selectedComponent: null
             });
-            done();
-        }, 0);
+        });
     });
 
-    it('can select components', (done) => {
+    it('can select components', () => {
         store.dispatch(actions.selectComponent('big-spinner.jsx',
                                                getComponentReference,
                                                getFixtureListReference));
 
-        assertStore({
+        return assertStore({
             componentList: null,
             selectedComponent: {
                 key: 'big-spinner.jsx',
                 reference: null,
                 fixtures: null,
             }
-        });
+        }).then(() => {
+            resolveComponentReference(SomeComponent);
 
-
-        resolveComponentReference(SomeComponent);
-
-        setTimeout(function() {
-            assertStore({
+            return assertStore({
                 componentList: null,
                 selectedComponent: {
                     key: 'big-spinner.jsx',
@@ -105,22 +104,18 @@ describe('createSandboxStore', () => {
                     fixtures: null
                 }
             });
-
+        }).then(() => {
             resolveFixtureListReference(someFixtures);
 
-            setTimeout(function() {
-                assertStore({
-                    componentList: null,
-                    selectedComponent: {
-                        key: 'big-spinner.jsx',
-                        reference: SomeComponent,
-                        fixtures: someFixtures
-                    }
-                });
-
-                done();
-            }, 0);
-        }, 0);
+            return assertStore({
+                componentList: null,
+                selectedComponent: {
+                    key: 'big-spinner.jsx',
+                    reference: SomeComponent,
+                    fixtures: someFixtures
+                }
+            });
+        });
     });
 
     it('can update fixtures', (done) => {
