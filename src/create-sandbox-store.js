@@ -88,11 +88,11 @@ const store = combineReducers({
     selectedComponent,
 });
 
-const createWithMiddleware = applyMiddleware(
-    thunkMiddleware,
-    logger  // XXX(jlfwong): Remove this
-)(createStore);
-
-const createSandboxStore = () => createWithMiddleware(store);
+const createSandboxStore = (includerLogger = true) => {
+    const middleware = (includerLogger ?
+                            [thunkMiddleware, logger] :
+                            [thunkMiddleware])
+    return applyMiddleware(...middleware)(createStore)(store);
+}
 
 module.exports = createSandboxStore;

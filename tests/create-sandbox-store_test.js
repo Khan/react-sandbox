@@ -37,7 +37,7 @@ describe('createSandboxStore', () => {
     };
 
     beforeEach(function() {
-        store = createSandboxStore();
+        store = createSandboxStore(false);
         resolveComponentList = null;
         resolveComponentReference = null;
         resolveFixtureListReference = null;
