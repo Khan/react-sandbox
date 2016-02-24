@@ -100,6 +100,14 @@ describe('SinglePropEditor', () => {
         assertChange(inputs[1], 'd', ['a', 'd']);
     });
 
+    it('can add entries within React.PropTypes.arrayOf(...)', () => {
+        const component = render(RP.arrayOf(RP.string.isRequired).isRequired,
+                                 ['a', 'b']);
+        const button = findByTag(component, 'button');
+        click(button);
+        assertValue(['a', 'b', null]);
+    });
+
     it('can edit fields within React.PropTypes.shape(...)', () => {
         const component = render(RP.shape({
             'a': RP.string.isRequired,

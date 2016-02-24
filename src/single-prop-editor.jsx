@@ -48,6 +48,15 @@ const FIELD_RENDERERS = (() => {
     const arrayOf = ({name, value, type, onChange}) => {
         const arrayVal = value || [];
 
+        const addButton = <button
+            key='add'
+            onClick={() => {
+                onChange(arrayVal.concat([null]));
+            }}
+        >
+            Add item to {name}
+        </button>;
+
         // TODO(jlfwong): Add ability to add or remove values
         return arrayVal.map((item, index) => {
             return <div className={css(styles.nestedProp)} key={index}>
@@ -62,7 +71,7 @@ const FIELD_RENDERERS = (() => {
                     }}
                 />
             </div>;
-        }).concat([<button key='add'>Add to {name}</button>]);
+        }).concat([addButton]);
     };
 
     const shape = ({name, value, type, onChange}) => {
