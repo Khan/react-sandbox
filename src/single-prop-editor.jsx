@@ -89,6 +89,22 @@ const FIELD_RENDERERS = (() => {
         return JSON.stringify(value);
     };
 
+    const nullable = (inputType, props) => {
+        const {onChange, value} = props;
+
+        return <div className={css(styles.nullableField)}>
+            {FIELD_RENDERERS[inputType](props)}
+            <div className={css(styles.nullContainer)}>
+                <button
+                    onClick={() => onChange(null)}
+                    disabled={value == null}
+                >
+                    null
+                </button>
+            </div>
+        </div>;
+    };
+
     return {
         string,
         node: string,
@@ -98,7 +114,8 @@ const FIELD_RENDERERS = (() => {
         oneOf,
         arrayOf,
         shape,
-        json
+        json,
+        nullable
     };
 })();
 
@@ -106,11 +123,14 @@ const SinglePropEditor = React.createClass({
     propTypes: {
         // The type of the prop to edit. This will match the values of return
         // type of inferTypes.
-        type: RP.shape({
-            type: RP.string.isRequired,
-            required: RP.bool.isRequired,
-            args: RP.array(RP.object.isRequired),
-        }).isRequired,
+        type: RP.oneOfType([
+            RP.func.isRequired,
+            RP.shape({
+                type: RP.string.isRequired,
+                required: RP.bool.isRequired,
+                args: RP.array(RP.object.isRequired),
+            }).isRequired
+        ]).isRequired,
 
         // The name of the prop
         name: RP.string.isRequired,
@@ -133,11 +153,15 @@ const SinglePropEditor = React.createClass({
 
         const inputType = FIELD_RENDERERS[type.type] ? type.type : 'json';
 
+        const fieldEditor = type.required ?
+            FIELD_RENDERERS[inputType](this.props) :
+            FIELD_RENDERERS.nullable(inputType, this.props);
+
         return <div className={css(styles.singleField)}>
             <span className={css(styles.nameLabel)}>
                 {name}
             </span>
-            {FIELD_RENDERERS[inputType](this.props)}
+            {fieldEditor}
         </div>
     },
 });
@@ -148,6 +172,9 @@ const styles = StyleSheet.create({
         position: 'relative',
         padding: '15px 0 5px 0',
         textAlign: 'left',
+    },
+    nullableField: {
+        display: 'flex',
     },
     nameLabel: {
         position: 'absolute',

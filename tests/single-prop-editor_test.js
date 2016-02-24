@@ -21,6 +21,8 @@ const change = (input, value) => {
     TestUtils.Simulate.change(input);
 };
 
+const {click} = TestUtils.Simulate;
+
 describe('SinglePropEditor', () => {
     let onChangeSpy;
 
@@ -33,9 +35,13 @@ describe('SinglePropEditor', () => {
         onChangeSpy = sinon.spy();
     });
 
+    const assertValue = (expected) => {
+        sinon.assert.calledWith(onChangeSpy, expected);
+    };
+
     const assertChange = (input, value, expected) => {
         change(input, value);
-        sinon.assert.calledWith(onChangeSpy, expected);
+        assertValue(expected);
     };
 
     const render = (propType, value) => {
@@ -57,25 +63,25 @@ describe('SinglePropEditor', () => {
     };
 
     it('can edit fields with React.PropTypes.string', () => {
-        const component = render(RP.string);
+        const component = render(RP.string.isRequired);
         const input = findByTag(component, 'input');
         assertChange(input, 'hello', 'hello')
     });
 
     it('can edit fields with React.PropTypes.element', () => {
-        const component = render(RP.element);
+        const component = render(RP.element.isRequired);
         const input = findByTag(component, 'input');
         assertChange(input, 'hello', 'hello')
     });
 
     it('can edit fields with React.PropTypes.node', () => {
-        const component = render(RP.node, 1);
+        const component = render(RP.node.isRequired);
         const input = findByTag(component, 'input');
-        assertChange(input, 10, 10)
+        assertChange(input, 'hello', 'hello')
     });
 
     it('can edit fields with React.PropTypes.bool', () => {
-        const component = render(RP.bool);
+        const component = render(RP.bool.isRequired);
         const input = findByTag(component, 'input');
         assertChange(input, true, true)
     });
@@ -87,7 +93,8 @@ describe('SinglePropEditor', () => {
     });
 
     it('can edit fields within React.PropTypes.arrayOf(...)', () => {
-        const component = render(RP.arrayOf(RP.string), ['a', 'b']);
+        const component = render(RP.arrayOf(RP.string.isRequired).isRequired,
+                                 ['a', 'b']);
         const inputs = scryByTag(component, 'input');
         assertChange(inputs[0], 'c', ['c', 'b']);
         assertChange(inputs[1], 'd', ['a', 'd']);
@@ -95,14 +102,36 @@ describe('SinglePropEditor', () => {
 
     it('can edit fields within React.PropTypes.shape(...)', () => {
         const component = render(RP.shape({
-            'a': RP.string,
-            'b': RP.string
-        }), {
+            'a': RP.string.isRequired,
+            'b': RP.string.isRequired
+        }).isRequired, {
             a: 'apple',
             b: 'banana',
         });
         const inputs = scryByTag(component, 'input');
         assertChange(inputs[0], 'apricot', {a: 'apricot', b: 'banana'});
         assertChange(inputs[1], 'blueberry', {a: 'apple', b: 'blueberry'});
+    });
+
+    // TODO(jlfwong): Enable *editing* these fields as JSON
+    it('can view unknown field types', () => {
+        // Just testing that this doesn't crash.
+        render(() => true, 'hello');
+    });
+
+    it('can edit optional fields (ones without isRequired)', () => {
+        const component = render(RP.string, 'hi');
+        const button = findByTag(component, 'button');
+        assert.ok(!button.disabled);
+        click(button);
+        assertValue(null);
+    });
+
+    it('can edit optional fields after null (ones without isRequired)', () => {
+        const component = render(RP.string, null);
+        const input = findByTag(component, 'input');
+        const button = findByTag(component, 'button');
+        assert.ok(button.disabled);
+        assertChange(input, 'hello', 'hello');
     });
 });
