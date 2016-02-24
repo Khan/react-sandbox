@@ -48,50 +48,64 @@ const FIELD_RENDERERS = (() => {
     const arrayOf = ({name, value, type, onChange}) => {
         const arrayVal = value || [];
 
-        const addButton = <button
-            key='add'
-            onClick={() => {
-                onChange(arrayVal.concat([null]));
-            }}
-        >
-            Add item to {name}
-        </button>;
-
-        // TODO(jlfwong): Add ability to add or remove values
-        return arrayVal.map((item, index) => {
-            return <div className={css(styles.nestedProp)} key={index}>
-                <SinglePropEditor
-                    name={`${name}[${index}]`}
-                    type={type.args[0]}
-                    value={item}
-                    onChange={newVal => {
+        return <div>
+            {arrayVal.map((item, index) => {
+                return <div
+                    className={css(styles.nestedProp, styles.arrayItem)}
+                    key={index}
+                >
+                    <button onClick={() => {
                         onChange(arrayVal.slice(0, index)
-                                    .concat([newVal])
-                                    .concat(arrayVal.slice(index + 1)));
-                    }}
-                />
-            </div>;
-        }).concat([addButton]);
+                                .concat(arrayVal.slice(index + 1)))
+                    }}>
+                        x
+                    </button>
+                    <div className={css(styles.grow)}>
+                        <SinglePropEditor
+                            name={`${name}[${index}]`}
+                            type={type.args[0]}
+                            value={item}
+                            onChange={newVal => {
+                                onChange(arrayVal.slice(0, index)
+                                            .concat([newVal])
+                                            .concat(arrayVal.slice(index + 1)));
+                            }}
+                        />
+                    </div>
+                </div>;
+            })}
+            <button
+                key='add'
+                onClick={() => {
+                    // TODO(jlfwong): Add generated props here instead
+                    onChange(arrayVal.concat([null]));
+                }}
+            >
+            Add item to {name}
+            </button>
+        </div>;
     };
 
     const shape = ({name, value, type, onChange}) => {
         const shape = type.args[0];
         const objVal = value || {};
-        return Object.keys(shape).map((childKey) => {
-            return <div className={css(styles.nestedProp)} key={childKey}>
-                <SinglePropEditor
-                    name={`${name}.${childKey}`}
-                    type={shape[childKey]}
-                    value={objVal[childKey]}
-                    onChange={newVal => {
-                        onChange({
-                            ...objVal,
-                            [childKey]: newVal
-                        });
-                    }}
-                />
-            </div>;
-        });
+        return <div>
+            {Object.keys(shape).map((childKey) => {
+                return <div className={css(styles.nestedProp)} key={childKey}>
+                    <SinglePropEditor
+                        name={`${name}.${childKey}`}
+                        type={shape[childKey]}
+                        value={objVal[childKey]}
+                        onChange={newVal => {
+                            onChange({
+                                ...objVal,
+                                [childKey]: newVal
+                            });
+                        }}
+                    />
+                </div>;
+            })}
+        </div>;
     };
 
     const json = ({value, onChange}) => {
@@ -102,15 +116,15 @@ const FIELD_RENDERERS = (() => {
         const {onChange, value} = props;
 
         return <div className={css(styles.nullableField)}>
-            {FIELD_RENDERERS[inputType](props)}
-            <div className={css(styles.nullContainer)}>
-                <button
-                    onClick={() => onChange(null)}
-                    disabled={value == null}
-                >
-                    null
-                </button>
+            <div className={css(styles.grow)}>
+                {FIELD_RENDERERS[inputType](props)}
             </div>
+            <button
+                onClick={() => onChange(null)}
+                disabled={value == null}
+            >
+                null
+            </button>
         </div>;
     };
 
@@ -184,6 +198,7 @@ const styles = StyleSheet.create({
     },
     nullableField: {
         display: 'flex',
+        fontFamily: 'monospace',
     },
     nameLabel: {
         position: 'absolute',
@@ -194,6 +209,13 @@ const styles = StyleSheet.create({
     },
     nestedProp: {
         marginLeft: 10,
+    },
+    arrayItem: {
+        display: 'flex',
+        alignItems: 'flex-start'
+    },
+    grow: {
+        flexGrow: 1
     },
     stringInput: {
         boxSizing: 'border-box',
