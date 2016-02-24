@@ -1,18 +1,65 @@
 
 const React = require("react");
+const ReactDOM = require("react-dom");
 const { StyleSheet, css } = require("aphrodite");
 
 const PureRenderMixinWithCursor = require("./pure-render-mixin-with-cursor.js");
 
 const RP = React.PropTypes;
 
+const debounce = (fn, wait) => {
+    let timeout;
+    return function(...args) {
+        const later = () => {
+            fn.apply(this, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
+const DebouncedInput = React.createClass({
+    getInitialState() {
+        return {
+            internalValue: this.props.value
+        };
+    },
+
+    handleChange(ev) {
+        const value = ev.target.value;
+        this.setState({internalValue: value});
+        this.debouncedOnChange(value);
+    },
+
+    componentWillMount() {
+        this.debouncedOnChange = debounce(this.props.onChange, 100);
+    },
+
+    componentWillReceiveProps(nextProps) {
+        // Only over-ride the internal value if the element is not focused.
+        if (ReactDOM.findDOMNode(this) !== document.activeElement) {
+            this.setState({
+                internalValue: nextProps.value
+            });
+        }
+    },
+
+    render() {
+        return <input
+            {...this.props}
+            onChange={this.handleChange}
+            value={this.state.internalValue}
+        />;
+    }
+});
+
 const FIELD_RENDERERS = (() => {
     const string = ({value, cursor, onChange}) => {
-        return <input
+        return <DebouncedInput
             className={css(styles.stringInput)}
             type="text"
             value={value}
-            onChange={(ev) => onChange(cursor, ev.target.value)}
+            onChange={(value) => onChange(cursor, value)}
         />;
     };
 

@@ -36,7 +36,6 @@ const shallowEqual = (objA, objB, customEquality = {}) => {
                 return false;
             }
         } else if (objA[key] !== objB[key]) {
-            console.log('changed', key, objA[key], objB[key]);
             return false;
         }
     }

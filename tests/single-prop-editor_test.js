@@ -25,6 +25,7 @@ const {click} = TestUtils.Simulate;
 
 describe('SinglePropEditor', () => {
     let onChangeSpy;
+    let clock;
 
     beforeEach(() => {
         patch(React.PropTypes);
@@ -33,6 +34,12 @@ describe('SinglePropEditor', () => {
         global.window = document.defaultView;
 
         onChangeSpy = sinon.spy();
+
+        clock = sinon.useFakeTimers();
+    });
+
+    afterEach(() => {
+        clock.restore();
     });
 
     const assertValue = (expected, cursor=[]) => {
@@ -41,6 +48,7 @@ describe('SinglePropEditor', () => {
 
     const assertChange = (input, value, cursor=[]) => {
         change(input, value);
+        clock.tick(1000);  // Wait for any debounced-ness to finish up
         assertValue(value, cursor);
     };
 
