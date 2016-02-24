@@ -4,7 +4,9 @@
 
 const { combineReducers, applyMiddleware, createStore } = require("redux");
 const thunkMiddleware = require("redux-thunk");
+const icepick = require("icepick");
 
+const { inferTypes } = require("./prop-type-tools.js");
 const constants = require("./constants.js");
 
 // TODO(jlfwong): Tests
@@ -28,6 +30,7 @@ const selectedComponent = (state = null, action) => {
                 key: action.key,
                 reference: null,
                 fixtures: null,
+                types: null,
             };
 
         case constants.COMPONENT_REFERENCE_DID_LOAD:
@@ -36,7 +39,8 @@ const selectedComponent = (state = null, action) => {
             if (action.key === state.key) {
                 return {
                     ...state,
-                    reference: action.reference
+                    reference: action.reference,
+                    types: inferTypes(action.reference)
                 };
             }
 
@@ -52,15 +56,15 @@ const selectedComponent = (state = null, action) => {
 
         case constants.UPDATE_FIXTURE:
             const instances = state.fixtures.instances;
-            const {index, newProps} = action;
+            const {cursor, newValue} = action;
 
             return {
                 ...state,
                 fixtures: {
                     ...state.fixtures,
-                    instances: (instances.slice(0, index)
-                                .concat(newProps)
-                                .concat(instances.slice(index + 1)))
+                    instances: icepick.assocIn(instances,
+                                               cursor,
+                                               newValue)
                 }
             };
     }

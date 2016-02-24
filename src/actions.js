@@ -56,11 +56,11 @@ const selectComponent = (key,
 /**
  * Update the values of a fixture for the currently selected component.
  */
-const updateFixture = (index, newProps) => {
+const updateFixture = (cursor, newValue) => {
     return {
         type: constants.UPDATE_FIXTURE,
-        index,
-        newProps,
+        cursor,
+        newValue,
     }
 };
 

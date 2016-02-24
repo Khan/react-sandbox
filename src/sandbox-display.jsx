@@ -9,6 +9,8 @@ const SandboxInstance = require("./sandbox-instance.jsx");
 
 const RP = React.PropTypes;
 
+const emptyList = Object.freeze([]);
+
 const SandboxDisplay = React.createClass({
     propTypes: {
         // A list of [label, key] pairs, one per component loadable in the
@@ -21,6 +23,9 @@ const SandboxDisplay = React.createClass({
 
             // A reference to the currently selected component
             reference: RP.func,
+
+            // The inferred types of the props of the selected component
+            types: RP.object,
 
             // A list of instances of props to pass to the component
             fixtures: RP.shape({
@@ -44,6 +49,7 @@ const SandboxDisplay = React.createClass({
             selectedComponent,
             onComponentSelect,
             onFixtureUpdate,
+            types
         } = this.props;
 
         if (!componentList) {
@@ -51,6 +57,8 @@ const SandboxDisplay = React.createClass({
             return <div>Loading...</div>;
         }
 
+        // TODO(jlfwong): Refactor this into a getContent() method to leverage
+        // early-returns
         let content = "";
 
         if (selectedComponent) {
@@ -69,12 +77,12 @@ const SandboxDisplay = React.createClass({
                             fixtures.instances.map((props, i) => {
                                 return <SandboxInstance
                                     key={i}
+                                    cursor={[i]}
                                     component={selectedComponent.reference}
                                     props={props}
-                                    callbacksToLog={fixtures.log || []}
-                                    onFixtureUpdate={(newProps) => {
-                                        onFixtureUpdate(i, newProps);
-                                    }}
+                                    types={selectedComponent.types}
+                                    callbacksToLog={fixtures.log || emptyList}
+                                    onFixtureUpdate={onFixtureUpdate}
                                 />;
                             })
                             :

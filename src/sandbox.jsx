@@ -25,7 +25,7 @@ const RP = React.PropTypes;
 const mapStateToProps = (state) => {
     return {
         componentList: state.componentList,
-        selectedComponent: state.selectedComponent
+        selectedComponent: state.selectedComponent,
     };
 };
 
@@ -39,8 +39,8 @@ const mapDispatchToProps = (dispatch, ownProps) => {
                     ownProps.getFixtureListReference));
         },
 
-        onFixtureUpdate: (index, props) => {
-            dispatch(actions.updateFixture(index, props));
+        onFixtureUpdate: (...args) => {
+            dispatch(actions.updateFixture(...args));
         }
     }
 };

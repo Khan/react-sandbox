@@ -6,10 +6,24 @@ const React = require("react");
 const { StyleSheet, css } = require("aphrodite");
 
 const PropEditor = require("./prop-editor.jsx");
+const PureRenderMixinWithCursor = require("./pure-render-mixin-with-cursor.js");
 
 const RP = React.PropTypes;
 
+const debounce = (fn, wait) => {
+    let timeout;
+    return function(...args) {
+        const later = () => {
+            fn.call(this, ...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
 const SandboxInstance = React.createClass({
+    mixins: [PureRenderMixinWithCursor],
+
     propTypes: {
         // The Component class to render
         component: RP.func.isRequired,
@@ -23,6 +37,15 @@ const SandboxInstance = React.createClass({
 
         // Called with the new prop values on update
         onFixtureUpdate: RP.func.isRequired,
+
+        // Cursor to the data this binds to in the fixtures. To be treated as
+        // opaque.
+        cursor: RP.arrayOf(RP.oneOfType([
+            RP.string.isRequired,
+            RP.number.isRequired
+        ]).isRequired).isRequired,
+
+        types: PropEditor.propTypes.types
     },
 
     getInitialState() {
@@ -51,37 +74,41 @@ const SandboxInstance = React.createClass({
 
         const Component = component;
 
-        setTimeout(() => {
-            if (!this.isMounted()) {
-                return;
-            }
-            try {
-                this.setState({
-                    content: <Component {...propsToPass} />
-                });
-            } catch(e) {
-                this.setState({
-                    content: <pre className={css(styles.errorBox)}>
-                        {e.stack}
-                    </pre>
-                });
+        if (!this.isMounted()) {
+            return;
+        }
+        try {
+            this.setState({
+                content: <Component {...propsToPass} />
+            });
+        } catch(e) {
+            this.setState({
+                content: <pre className={css(styles.errorBox)}>
+                    {e.stack}
+                </pre>
+            });
 
-                // Rethrow error to make inspecting in the console easier.
-                throw e;
-            }
-        }, 0);
+            // Rethrow error to make inspecting in the console easier.
+            throw e;
+        }
     },
 
-    componentWillReceiveProps(nextProps) {
-        this.renderComponent(nextProps);
+    componentWillMount() {
+        this.debouncedRenderComponent = debounce(this.renderComponent, 20);
     },
 
     componentDidMount() {
-        this.renderComponent(this.props);
+        this.debouncedRenderComponent(this.props);
+    },
+
+    componentWillReceiveProps(nextProps) {
+        if (this.shouldComponentUpdate(nextProps, this.state)) {
+            this.debouncedRenderComponent(nextProps);
+        }
     },
 
     render() {
-        const {component, props, onFixtureUpdate} = this.props;
+        const {component, props, onFixtureUpdate, cursor, types} = this.props;
         const {content} = this.state;
 
         return <div className={css(styles.container)}>
@@ -90,6 +117,8 @@ const SandboxInstance = React.createClass({
                     component={component}
                     componentProps={props}
                     onChange={onFixtureUpdate}
+                    cursor={cursor}
+                    types={types}
                 />
             </div>
             <div className={css(styles.componentTableWrapper)}>

@@ -3,12 +3,23 @@ const React = require('react');
 
 const createSandboxStore = require("../src/create-sandbox-store.js");
 const actions = require("../src/actions.js");
+const { patch } = require("../src/prop-type-tools.js");
 
 const SomeComponent = React.createClass({
+    propTypes: {
+        a: React.PropTypes.string
+    },
     render() {
         return <div />;
     }
 });
+
+const expectedComponentTypes = {
+    a: {
+        type: 'string',
+        required: false
+    }
+};
 
 const someFixtures = {instances: [{a: 1}]};
 
@@ -41,6 +52,7 @@ describe('createSandboxStore', () => {
         resolveComponentList = null;
         resolveComponentReference = null;
         resolveFixtureListReference = null;
+        patch(React.PropTypes);
     });
 
     const assertStore = (expected) => {
@@ -92,6 +104,7 @@ describe('createSandboxStore', () => {
                 key: 'big-spinner.jsx',
                 reference: null,
                 fixtures: null,
+                types: null
             }
         }).then(() => {
             resolveComponentReference(SomeComponent);
@@ -101,6 +114,7 @@ describe('createSandboxStore', () => {
                 selectedComponent: {
                     key: 'big-spinner.jsx',
                     reference: SomeComponent,
+                    types: expectedComponentTypes,
                     fixtures: null
                 }
             });
@@ -112,6 +126,7 @@ describe('createSandboxStore', () => {
                 selectedComponent: {
                     key: 'big-spinner.jsx',
                     reference: SomeComponent,
+                    types: expectedComponentTypes,
                     fixtures: someFixtures
                 }
             });
@@ -130,16 +145,18 @@ describe('createSandboxStore', () => {
             selectedComponent: {
                 key: 'big-spinner.jsx',
                 reference: SomeComponent,
+                    types: expectedComponentTypes,
                 fixtures: someFixtures,
             }
         }).then(() => {
-            store.dispatch(actions.updateFixture(0, {a: 2}));
+            store.dispatch(actions.updateFixture([0, 'a'], 2));
 
             return assertStore({
                 componentList: null,
                 selectedComponent: {
                     key: 'big-spinner.jsx',
                     reference: SomeComponent,
+                    types: expectedComponentTypes,
                     fixtures: {
                         instances: [{a: 2}]
                     }

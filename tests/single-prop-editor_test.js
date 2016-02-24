@@ -35,13 +35,13 @@ describe('SinglePropEditor', () => {
         onChangeSpy = sinon.spy();
     });
 
-    const assertValue = (expected) => {
-        sinon.assert.calledWith(onChangeSpy, expected);
+    const assertValue = (expected, cursor=[]) => {
+        sinon.assert.calledWith(onChangeSpy, cursor, expected);
     };
 
-    const assertChange = (input, value, expected) => {
+    const assertChange = (input, value, cursor=[]) => {
         change(input, value);
-        assertValue(expected);
+        assertValue(value, cursor);
     };
 
     const render = (propType, value) => {
@@ -57,6 +57,7 @@ describe('SinglePropEditor', () => {
         return TestUtils.renderIntoDocument(<SinglePropEditor
             type={inferTypes(RelatedComponent).a}
             name='foo'
+            cursor={[]}
             onChange={onChangeSpy}
             value={value}
         />);
@@ -65,39 +66,39 @@ describe('SinglePropEditor', () => {
     it('can edit fields with React.PropTypes.string', () => {
         const component = render(RP.string.isRequired);
         const input = findByTag(component, 'input');
-        assertChange(input, 'hello', 'hello')
+        assertChange(input, 'hello')
     });
 
     it('can edit fields with React.PropTypes.element', () => {
         const component = render(RP.element.isRequired);
         const input = findByTag(component, 'input');
-        assertChange(input, 'hello', 'hello')
+        assertChange(input, 'hello')
     });
 
     it('can edit fields with React.PropTypes.node', () => {
         const component = render(RP.node.isRequired);
         const input = findByTag(component, 'input');
-        assertChange(input, 'hello', 'hello')
+        assertChange(input, 'hello')
     });
 
     it('can edit fields with React.PropTypes.bool', () => {
         const component = render(RP.bool.isRequired);
         const input = findByTag(component, 'input');
-        assertChange(input, true, true)
+        assertChange(input, true)
     });
 
     it('can edit fields with React.PropTypes.oneOf', () => {
         const component = render(RP.oneOf(['a', 'b']));
         const input = findByTag(component, 'select');
-        assertChange(input, 'a', 'a')
+        assertChange(input, 'a')
     });
 
     it('can edit fields within React.PropTypes.arrayOf(...)', () => {
         const component = render(RP.arrayOf(RP.string.isRequired).isRequired,
                                  ['a', 'b']);
         const inputs = scryByTag(component, 'input');
-        assertChange(inputs[0], 'c', ['c', 'b']);
-        assertChange(inputs[1], 'd', ['a', 'd']);
+        assertChange(inputs[0], 'c', [0])
+        assertChange(inputs[1], 'd', [1])
     });
 
     it('can remove entries within React.PropTypes.arrayOf(...)', () => {
@@ -125,8 +126,8 @@ describe('SinglePropEditor', () => {
             b: 'banana',
         });
         const inputs = scryByTag(component, 'input');
-        assertChange(inputs[0], 'apricot', {a: 'apricot', b: 'banana'});
-        assertChange(inputs[1], 'blueberry', {a: 'apple', b: 'blueberry'});
+        assertChange(inputs[0], 'apricot', ['a']);
+        assertChange(inputs[1], 'blueberry', ['b']);
     });
 
     // TODO(jlfwong): Enable *editing* these fields as JSON
@@ -148,6 +149,6 @@ describe('SinglePropEditor', () => {
         const input = findByTag(component, 'input');
         const button = findByTag(component, 'button');
         assert.ok(button.disabled);
-        assertChange(input, 'hello', 'hello');
+        assertChange(input, 'hello');
     });
 });

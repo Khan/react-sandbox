@@ -2,40 +2,42 @@
 const React = require("react");
 const { StyleSheet, css } = require("aphrodite");
 
-const { inferTypes } = require("./prop-type-tools.js");
+const PureRenderMixinWithCursor = require("./pure-render-mixin-with-cursor.js");
 
 const RP = React.PropTypes;
 
 const FIELD_RENDERERS = (() => {
-    const string = ({value, onChange}) => {
+    const string = ({value, cursor, onChange}) => {
         return <input
             className={css(styles.stringInput)}
             type="text"
             value={value}
-            onChange={(ev) => onChange(ev.target.value)}
+            onChange={(ev) => onChange(cursor, ev.target.value)}
         />;
     };
 
-    const bool = ({value, onChange}) => {
+    const bool = ({value, cursor, onChange}) => {
         return <input
             type="checkbox"
             checked={value}
-            onChange={(ev) => onChange(ev.target.checked)}
+            onChange={(ev) => onChange(cursor, ev.target.checked)}
         />;
     };
 
-    const number = ({value, onChange}) => {
+    const number = ({value, cursor, onChange}) => {
         return <input
             type="number"
             value={value}
-            onChange={(ev) => onChange(parseFloat(ev.target.value, 10))}
+            onChange={
+                (ev) => onChange(cursor, parseFloat(ev.target.value, 10))
+            }
         />;
     };
 
-    const oneOf = ({type, value, onChange}) => {
+    const oneOf = ({type, value, cursor, onChange}) => {
         return <select
             value={value}
-            onChange={(ev) => onChange(ev.target.value)}
+            onChange={(ev) => onChange(cursor, ev.target.value)}
         >
             {type.args[0].map(option => {
                 return <option key={option} value={option}>
@@ -45,7 +47,7 @@ const FIELD_RENDERERS = (() => {
         </select>;
     };
 
-    const arrayOf = ({name, value, type, onChange}) => {
+    const arrayOf = ({name, value, cursor, type, onChange}) => {
         const arrayVal = value || [];
 
         return <div>
@@ -55,8 +57,9 @@ const FIELD_RENDERERS = (() => {
                     key={index}
                 >
                     <button onClick={() => {
-                        onChange(arrayVal.slice(0, index)
-                                .concat(arrayVal.slice(index + 1)))
+                        onChange(cursor,
+                                 arrayVal.slice(0, index)
+                                 .concat(arrayVal.slice(index + 1)))
                     }}>
                         x
                     </button>
@@ -65,11 +68,8 @@ const FIELD_RENDERERS = (() => {
                             name={`${name}[${index}]`}
                             type={type.args[0]}
                             value={item}
-                            onChange={newVal => {
-                                onChange(arrayVal.slice(0, index)
-                                            .concat([newVal])
-                                            .concat(arrayVal.slice(index + 1)));
-                            }}
+                            onChange={onChange}
+                            cursor={cursor.concat([index])}
                         />
                     </div>
                 </div>;
@@ -78,7 +78,7 @@ const FIELD_RENDERERS = (() => {
                 key='add'
                 onClick={() => {
                     // TODO(jlfwong): Add generated props here instead
-                    onChange(arrayVal.concat([null]));
+                    onChange(cursor, arrayVal.concat([null]));
                 }}
             >
             Add item to {name}
@@ -86,7 +86,7 @@ const FIELD_RENDERERS = (() => {
         </div>;
     };
 
-    const shape = ({name, value, type, onChange}) => {
+    const shape = ({name, value, type, cursor, onChange}) => {
         const shape = type.args[0];
         const objVal = value || {};
         return <div>
@@ -96,12 +96,8 @@ const FIELD_RENDERERS = (() => {
                         name={`${name}.${childKey}`}
                         type={shape[childKey]}
                         value={objVal[childKey]}
-                        onChange={newVal => {
-                            onChange({
-                                ...objVal,
-                                [childKey]: newVal
-                            });
-                        }}
+                        onChange={onChange}
+                        cursor={cursor.concat([childKey])}
                     />
                 </div>;
             })}
@@ -113,14 +109,14 @@ const FIELD_RENDERERS = (() => {
     };
 
     const nullable = (inputType, props) => {
-        const {onChange, value} = props;
+        const {onChange, value, cursor} = props;
 
         return <div className={css(styles.nullableField)}>
             <div className={css(styles.grow)}>
                 {FIELD_RENDERERS[inputType](props)}
             </div>
             <button
-                onClick={() => onChange(null)}
+                onClick={() => onChange(cursor, null)}
                 disabled={value == null}
             >
                 null
@@ -143,6 +139,8 @@ const FIELD_RENDERERS = (() => {
 })();
 
 const SinglePropEditor = React.createClass({
+    mixins: [PureRenderMixinWithCursor],
+
     propTypes: {
         // The type of the prop to edit. This will match the values of return
         // type of inferTypes.
@@ -158,6 +156,12 @@ const SinglePropEditor = React.createClass({
         // The name of the prop
         name: RP.string.isRequired,
 
+        // Cursor to the data this binds to in the fixtures.
+        cursor: RP.arrayOf(RP.oneOfType([
+            RP.string.isRequired,
+            RP.number.isRequired
+        ]).isRequired).isRequired,
+
         // The current value of this prop.
         value: RP.any,
 
@@ -167,11 +171,7 @@ const SinglePropEditor = React.createClass({
     render() {
         const {name, type} = this.props;
 
-        // TODO(jlfwong): Editing
-        // TODO(jlfwong): Adding to lists
         // TODO(jlfwong): Adding to objectOf
-        // TODO(jlfwong): Nullability
-        // TODO(jlfwong): The rest of the proptypes
         // TODO(jlfwong): Drag to re-arrange in arrays
 
         const inputType = FIELD_RENDERERS[type.type] ? type.type : 'json';

@@ -4,7 +4,6 @@
 
 const React = require("react");
 
-const { inferTypes } = require("./prop-type-tools.js");
 const SinglePropEditor = require("./single-prop-editor.jsx");
 
 const RP = React.PropTypes;
@@ -18,15 +17,27 @@ const PropEditor = React.createClass({
         componentProps: RP.object.isRequired,
 
         // Invoked with new values of props as they change
-        onChange: RP.func.isRequired
+        onChange: RP.func.isRequired,
+
+        // Cursor to the data this binds to in the fixtures.
+        cursor: RP.arrayOf(RP.oneOfType([
+            RP.string.isRequired,
+            RP.number.isRequired
+        ]).isRequired).isRequired,
+
+        // The type of the prop to edit. This will match the return
+        // type of inferTypes.
+        types: RP.objectOf(SinglePropEditor.propTypes.type).isRequired,
     },
 
     render() {
-        const {component, componentProps, onChange} = this.props;
-
-        // TODO(jlfwong): Move this into
-        // javascript/react-sandbox-package/sandbox.jsx
-        const types = inferTypes(component);
+        const {
+            component,
+            componentProps,
+            onChange,
+            cursor,
+            types
+        } = this.props;
 
         return <div>
             {Object.keys(types).map(key => {
@@ -35,12 +46,8 @@ const PropEditor = React.createClass({
                     name={key}
                     type={types[key]}
                     value={componentProps[key]}
-                    onChange={(newVal) => {
-                        onChange({
-                            ...componentProps,
-                            [key]: newVal
-                        });
-                    }}
+                    onChange={onChange}
+                    cursor={cursor.concat([key])}
                 />
             })}
         </div>;
