@@ -137,11 +137,12 @@ const styles = StyleSheet.create({
     propEditorWrapper: {
         width: 400,
         overflow: 'scroll',
-        maxHeight: 400,
+        maxHeight: 800,
     },
     componentTableWrapper: {
         flexGrow: 1,
-        overflow: 'auto'
+        overflow: 'auto',
+        maxHeight: 800,
     },
     errorBox: {
         background: 'red',
