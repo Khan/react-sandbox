@@ -10,15 +10,26 @@ const PureRenderMixinWithCursor = require("./pure-render-mixin-with-cursor.js");
 
 const RP = React.PropTypes;
 
-const debounce = (fn, wait) => {
-    let timeout;
-    return function(...args) {
-        const later = () => {
-            fn.apply(this, args);
+// TODO(jlfwong): Remove this once we upgrade to React v0.15.0 so we can use
+// Error boundaries, which this implements (poorly)
+const patchWithTryCatch = (Component) => {
+    if (!Component.__patchedWithTryCatchBySandbox) {
+        Component.__patchedWithTryCatchBySandbox = true;
+
+        const origRender = Component.prototype.render;
+
+        Component.prototype.render = function() {
+            try {
+                return origRender.call(this);
+            } catch(e) {
+                return <pre className={css(styles.errorBox)}>
+                    {e.stack}
+                </pre>;
+            }
         };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
+    }
+
+    return Component;
 };
 
 const SandboxInstance = React.createClass({
@@ -48,22 +59,16 @@ const SandboxInstance = React.createClass({
         types: PropEditor.propTypes.types
     },
 
-    getInitialState() {
-        return {
-            content: null
-        }
-    },
+    render() {
+        const {
+            component,
+            props,
+            callbacksToLog,
+            onFixtureUpdate,
+            cursor,
+            types
+        } = this.props;
 
-    renderComponent({component, props, callbacksToLog}) {
-        // We render and update the component to view in an async manner
-        // to avoid the unfortunate situation where the props in the editor are
-        // invalid, causing the component rendering the crash, causing the prop
-        // editor to stop updating, making it very difficult to remedy our
-        // mistake!
-        //
-        // TODO(jlfwong): If/when this gets upgraded to React v0.15.0, we can
-        // use error boundaries to get around this problem. See
-        // https://github.com/facebook/react/issues/2461
         const propsToPass = {...props};
 
         callbacksToLog.forEach(propToLog => {
@@ -72,44 +77,7 @@ const SandboxInstance = React.createClass({
             };
         });
 
-        const Component = component;
-
-        if (!this.isMounted()) {
-            return;
-        }
-        try {
-            this.setState({
-                content: <Component {...propsToPass} />
-            });
-        } catch(e) {
-            this.setState({
-                content: <pre className={css(styles.errorBox)}>
-                    {e.stack}
-                </pre>
-            });
-
-            // Rethrow error to make inspecting in the console easier.
-            throw e;
-        }
-    },
-
-    componentWillMount() {
-        this.debouncedRenderComponent = debounce(this.renderComponent, 20);
-    },
-
-    componentDidMount() {
-        this.debouncedRenderComponent(this.props);
-    },
-
-    componentWillReceiveProps(nextProps) {
-        if (this.shouldComponentUpdate(nextProps, this.state)) {
-            this.debouncedRenderComponent(nextProps);
-        }
-    },
-
-    render() {
-        const {component, props, onFixtureUpdate, cursor, types} = this.props;
-        const {content} = this.state;
+        const Component = patchWithTryCatch(component);
 
         return <div className={css(styles.container)}>
             <div className={css(styles.propEditorWrapper)}>
@@ -122,7 +90,7 @@ const SandboxInstance = React.createClass({
                 />
             </div>
             <div className={css(styles.componentTableWrapper)}>
-                {content}
+                <Component {...propsToPass} />
             </div>
         </div>;
     }

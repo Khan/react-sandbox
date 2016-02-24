@@ -13,3 +13,5 @@ TODO:
     - Importing of fixtures
     - Edit unknown props as JSON
     - Add to array when field is null?
+    - Undo/redo
+    - Autocomplete for searching through components
