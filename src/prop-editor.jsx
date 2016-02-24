@@ -26,7 +26,7 @@ const PropEditor = React.createClass({
         ]).isRequired).isRequired,
 
         // The type of the prop to edit. This will match the return
-        // type of inferTypes.
+        // type of inferTypesForComponent.
         types: RP.objectOf(SinglePropEditor.propTypes.type).isRequired,
     },
 

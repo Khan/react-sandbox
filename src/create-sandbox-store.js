@@ -6,7 +6,7 @@ const { combineReducers, applyMiddleware, createStore } = require("redux");
 const thunkMiddleware = require("redux-thunk");
 const icepick = require("icepick");
 
-const { inferTypes } = require("./prop-type-tools.js");
+const { inferTypesForComponent } = require("./prop-type-tools.js");
 const constants = require("./constants.js");
 
 // TODO(jlfwong): Tests
@@ -40,7 +40,7 @@ const selectedComponent = (state = null, action) => {
                 return {
                     ...state,
                     reference: action.reference,
-                    types: inferTypes(action.reference)
+                    types: inferTypesForComponent(action.reference)
                 };
             }
 

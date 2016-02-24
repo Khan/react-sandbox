@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const { assert } = require('chai');
 
 const SinglePropEditor = require('../src/single-prop-editor.jsx');
-const { patch, inferTypes } = require('../src/prop-type-tools.js');
+const { patch, inferType } = require('../src/prop-type-tools.js');
 
 const RP = React.PropTypes;
 
@@ -53,17 +53,8 @@ describe('SinglePropEditor', () => {
     };
 
     const render = (propType, value) => {
-        const RelatedComponent = React.createClass({
-            propTypes: {
-                a: propType
-            },
-            render() {}
-        });
-
-        const type = inferTypes(RelatedComponent).a;
-
         return TestUtils.renderIntoDocument(<SinglePropEditor
-            type={inferTypes(RelatedComponent).a}
+            type={inferType(propType)}
             name='foo'
             cursor={[]}
             onChange={onChangeSpy}

@@ -47,25 +47,29 @@ const patch = (PropTypes) => {
     PropTypes.__isPatchedBySandbox = true;
 };
 
-
-const _inferType = (propType) => {
+const inferType = (propType) => {
     if (propType.__sandbox_meta != null) {
         const {type, required, args} = propType.__sandbox_meta;
         if (args != null) {
             return {
                 type,
                 required,
-                args: args.map(_inferType)
+                args: args.map(inferType),
+                __propType: propType,
             };
         } else {
-            return {type, required};
+            return {
+                type,
+                required,
+                __propType: propType,
+            };
         }
     } else if (Array.isArray(propType)) {
-        return propType.map(_inferType);
+        return propType.map(inferType);
     } else if (typeof propType === 'object') {
         const ret = {};
         Object.keys(propType).forEach(key => {
-            ret[key] = _inferType(propType[key]);
+            ret[key] = inferType(propType[key]);
         });
         return ret;
     } else {
@@ -77,19 +81,36 @@ const _inferType = (propType) => {
  * Given a refernece to a component, return a description of the proptypes it
  * expects.
  */
-const inferTypes = (Component) => {
+const inferTypesForComponent = (Component) => {
     const ret = {};
 
     const propTypes = Component.propTypes || {};
 
     Object.keys(propTypes).forEach(propName => {
-        ret[propName] = _inferType(propTypes[propName]);
+        ret[propName] = inferType(propTypes[propName]);
     });
 
     return ret;
 };
 
+/**
+ * Given a value and a type as returned by inferType, return true if the value
+ * satisfies the type.
+ */
+const valueSatisfiesType = (value, inferredType) => {
+    const propType = (typeof inferredType === 'function') ?
+                            inferredType :
+                            inferredType.__propType;
+
+    const maybeError = propType({__ignored__: value},
+                                '__ignored__', '__ignore__', 'prop');
+
+    return !(maybeError instanceof Error);
+};
+
 module.exports = {
     patch,
-    inferTypes
+    inferType,
+    inferTypesForComponent,
+    valueSatisfiesType,
 };

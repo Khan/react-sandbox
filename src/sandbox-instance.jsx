@@ -32,6 +32,24 @@ const patchWithTryCatch = (Component) => {
     return Component;
 };
 
+const getInvalidProps = (component, props) => {
+    const propTypes = component.propTypes;
+    const componentName = component.displayName;
+
+    const errors = [];
+
+    for (var propName in propTypes) {
+        if (!propTypes.hasOwnProperty(propName)) {
+            continue;
+        }
+        error = propTypes[propName](props, propName, componentName, 'prop');
+        if (error instanceof Error) {
+            errors.push(error);
+        }
+    }
+    return errors;
+};
+
 const SandboxInstance = React.createClass({
     mixins: [PureRenderMixinWithCursor],
 
@@ -77,6 +95,8 @@ const SandboxInstance = React.createClass({
             };
         });
 
+        const propErrors = getInvalidProps(component, props);
+
         const Component = patchWithTryCatch(component);
 
         return <div className={css(styles.container)}>
@@ -90,7 +110,12 @@ const SandboxInstance = React.createClass({
                 />
             </div>
             <div className={css(styles.componentTableWrapper)}>
-                <Component {...propsToPass} />
+                {propErrors.length > 0 ?
+                    <pre className={css(styles.errorBox)}>
+                        {propErrors.map(er => er.toString()).join('\n')}
+                    </pre>
+                    :
+                    <Component {...propsToPass} />}
             </div>
         </div>;
     }

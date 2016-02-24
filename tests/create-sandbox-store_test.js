@@ -56,9 +56,33 @@ describe('createSandboxStore', () => {
     });
 
     const assertStore = (expected) => {
+        // Remove references to __propType, which winds up as a property of
+        // inferred types. We don't care about making assertions about it.
+        const clean = (x) => {
+            if (x == null) {
+                return x;
+            } else if (Array.isArray(x)) {
+                return x.map(clean);
+            } else if (typeof x === 'object') {
+                const ret = {};
+                for (let key in x) {
+                    if (!x.hasOwnProperty(key) ||
+                        key === '__propType') {
+
+                        continue;
+                    }
+
+                    ret[key] = clean(x[key]);
+                }
+                return ret;
+            } else {
+                return x;
+            }
+        };
+
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                assert.deepEqual(store.getState(), expected);
+                assert.deepEqual(clean(store.getState()), expected);
                 resolve();
             }, 0);
         });

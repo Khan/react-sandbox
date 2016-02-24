@@ -1,24 +1,46 @@
 const { assert } = require('chai');
 const React = require('react');
 
-const { patch, inferTypes }  = require("../src/prop-type-tools.js");
+const {
+    patch,
+    inferType,
+    inferTypesForComponent,
+    valueSatisfiesType
+} = require("../src/prop-type-tools.js");
 
 const RP = React.PropTypes;
 
-describe('propTypeTools', () => {
+describe('inferType', () => {
     before(() => {
         patch(React.PropTypes);
     });
 
-    const assertSingleType = (propType, expected) => {
-        const TestComponent = React.createClass({
-            propTypes: {
-                a: propType
-            },
-            render() {}
-        });
+    // Remove references to __propType, which winds up as a property of
+    // inferred types. We don't care about making assertions about it.
+    const clean = (x) => {
+        if (x == null) {
+            return x;
+        } else if (Array.isArray(x)) {
+            return x.map(clean);
+        } else if (typeof x === 'object') {
+            const ret = {};
+            for (let key in x) {
+                if (!x.hasOwnProperty(key) ||
+                    key === '__propType') {
 
-        assert.deepEqual(inferTypes(TestComponent).a, expected);
+                    continue;
+                }
+
+                ret[key] = clean(x[key]);
+            }
+            return ret;
+        } else {
+            return x;
+        }
+    };
+
+    const assertSingleType = (propType, expected) => {
+        assert.deepEqual(clean(inferType(propType)), expected);
     };
 
     const assertTypes = (propTypes, expected) => {
@@ -26,7 +48,8 @@ describe('propTypeTools', () => {
             propTypes,
             render() {}
         });
-        assert.deepEqual(inferTypes(TestComponent), expected);
+        assert.deepEqual(clean(inferTypesForComponent(TestComponent)),
+                         expected);
     };
 
     const simpleTypes = ['array', 'bool', 'func', 'number', 'object',
@@ -200,8 +223,8 @@ describe('propTypeTools', () => {
         // validators of their own. In case someone writes an entirely custom
         // one, we can't infer the type, but we at least want to avoid
         // crashing.
-        const even = x => x % 2 === 0;
-        assertSingleType(even, even);
+        const fn = () => {};
+        assertSingleType(fn, fn);
     });
 
     it("can infer types of a component's propTypes property", () => {
@@ -218,5 +241,13 @@ describe('propTypeTools', () => {
                 required: false
             }
         });
+    });
+});
+
+describe('valueSatisfiesType', () => {
+    it('can validate strings', () => {
+        assert.isTrue(valueSatisfiesType('a', RP.string.isRequired));
+        assert.isFalse(valueSatisfiesType(null, RP.string.isRequired));
+        assert.isTrue(valueSatisfiesType(null, RP.string));
     });
 });

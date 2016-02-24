@@ -4,6 +4,7 @@ const ReactDOM = require("react-dom");
 const { StyleSheet, css } = require("aphrodite");
 
 const PureRenderMixinWithCursor = require("./pure-render-mixin-with-cursor.js");
+const { valueSatisfiesType } = require("./prop-type-tools.js");
 
 const RP = React.PropTypes;
 
@@ -216,7 +217,7 @@ const SinglePropEditor = React.createClass({
     },
 
     render() {
-        const {name, type} = this.props;
+        const {name, value, type} = this.props;
 
         // TODO(jlfwong): Adding to objectOf
         // TODO(jlfwong): Drag to re-arrange in arrays
@@ -227,7 +228,10 @@ const SinglePropEditor = React.createClass({
             FIELD_RENDERERS[inputType](this.props) :
             FIELD_RENDERERS.nullable(inputType, this.props);
 
-        return <div className={css(styles.singleField)}>
+        const invalid = !valueSatisfiesType(value, type);
+
+        return <div className={css(styles.singleField,
+                                   invalid && styles.invalidField)}>
             <span className={css(styles.nameLabel)}>
                 {name}
             </span>
@@ -242,6 +246,9 @@ const styles = StyleSheet.create({
         position: 'relative',
         padding: '15px 0 5px 0',
         textAlign: 'left',
+    },
+    invalidField: {
+        background: 'red'
     },
     nullableField: {
         display: 'flex',
