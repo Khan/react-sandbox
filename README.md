@@ -10,7 +10,6 @@ TODO:
     - Saving of fixtures
     - Importing of fixtures
     - Edit unknown props as JSON
-    - Add to array when field is null?
     - Undo/redo
     - Autocomplete for searching through components
     - Make it work with react hotloading (updating the proptypes might be 

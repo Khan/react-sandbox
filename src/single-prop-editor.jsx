@@ -107,7 +107,8 @@ const FIELD_RENDERERS = (() => {
         </select>;
     };
 
-    const arrayOf = ({name, value, cursor, type, onChange}) => {
+    const arrayOf = ({name, value, cursor, type,
+                      onChange, ancestorValid}) => {
         const arrayVal = value || [];
 
         return <div>
@@ -130,6 +131,7 @@ const FIELD_RENDERERS = (() => {
                             value={item}
                             onChange={onChange}
                             cursor={cursor.concat([index])}
+                            ancestorValid={ancestorValid}
                         />
                     </div>
                 </div>;
@@ -147,7 +149,7 @@ const FIELD_RENDERERS = (() => {
         </div>;
     };
 
-    const shape = ({name, value, type, cursor, onChange}) => {
+    const shape = ({name, value, type, cursor, onChange, ancestorValid}) => {
         const shape = type.args[0];
         const objVal = value || {};
         return <div>
@@ -159,6 +161,7 @@ const FIELD_RENDERERS = (() => {
                         value={objVal[childKey]}
                         onChange={onChange}
                         cursor={cursor.concat([childKey])}
+                        ancestorValid={ancestorValid}
                     />
                 </div>;
             })}
@@ -227,24 +230,42 @@ const SinglePropEditor = React.createClass({
         value: RP.any,
 
         onChange: RP.func.isRequired,
+
+        // True if the parent prop editor has valid props. Defaults to false.
+        // This default should only be used for the top-level props.
+        ancestorValid: RP.bool.isRequired,
+    },
+
+    getDefaultProps() {
+        return {
+            ancestorValid: false
+        };
     },
 
     render() {
-        const {name, value, type} = this.props;
+        const {name, value, type, ancestorValid} = this.props;
 
         // TODO(jlfwong): Adding to objectOf
         // TODO(jlfwong): Drag to re-arrange in arrays
 
         const inputType = FIELD_RENDERERS[type.type] ? type.type : 'json';
 
-        const fieldEditor = type.required ?
-            FIELD_RENDERERS[inputType](this.props) :
-            FIELD_RENDERERS.nullable(inputType, this.props);
+        // The validity of this field is unimportant if one of the ancestors
+        // validated. This allows us to ignore fields that are invalid when
+        // a parent is null.
+        const valid = ancestorValid || valueSatisfiesType(value, type);
 
-        const invalid = !valueSatisfiesType(value, type);
+        const props = {
+            ...this.props,
+            ancestorValid: valid
+        };
+
+        const fieldEditor = type.required ?
+            FIELD_RENDERERS[inputType](props) :
+            FIELD_RENDERERS.nullable(inputType, props);
 
         return <div className={css(styles.singleField,
-                                   invalid && styles.invalidField)}>
+                                   (!valid) && styles.invalidField)}>
             <span className={css(styles.nameLabel)}>
                 {name}
             </span>
@@ -259,9 +280,10 @@ const styles = StyleSheet.create({
         position: 'relative',
         padding: '15px 0 5px 0',
         textAlign: 'left',
+        background: 'white',
     },
     invalidField: {
-        background: 'red'
+        background: 'rgba(255, 0, 0, 0.4)'
     },
     nullableField: {
         display: 'flex',
