@@ -5,7 +5,8 @@ const {
     patch,
     inferType,
     inferTypesForComponent,
-    valueSatisfiesType
+    valueSatisfiesType,
+    generateValueForType
 } = require("../src/prop-type-tools.js");
 
 const RP = React.PropTypes;
@@ -249,5 +250,81 @@ describe('valueSatisfiesType', () => {
         assert.isTrue(valueSatisfiesType('a', RP.string.isRequired));
         assert.isFalse(valueSatisfiesType(null, RP.string.isRequired));
         assert.isTrue(valueSatisfiesType(null, RP.string));
+    });
+});
+
+describe("generateValueForType", () => {
+    const generate = (type) => generateValueForType(inferType(type), 'foo');
+    const assertGenerated = (type, expected) => {
+        assert.deepEqual(generate(type), expected);
+    };
+
+    it('can generate strings', () => {
+        assertGenerated(RP.string, null);
+        assertGenerated(RP.string.isRequired, '');
+    });
+
+    it('can generate nodes', () => {
+        assertGenerated(RP.node, null);
+        assertGenerated(RP.node.isRequired, '');
+    });
+
+    it('can generate elements', () => {
+        assertGenerated(RP.node, null);
+        assertGenerated(RP.node.isRequired, '');
+    });
+
+    it('can generate any', () => {
+        // We'll just use strings for any for now
+        assertGenerated(RP.any, null);
+        assertGenerated(RP.any.isRequired, '');
+    });
+
+    it('can generate numbers', () => {
+        assertGenerated(RP.number, null);
+        assertGenerated(RP.number.isRequired, 0);
+    });
+
+    it('can generate booleans', () => {
+        assertGenerated(RP.bool, null);
+        assertGenerated(RP.bool.isRequired, false);
+    });
+
+    it('can generate arrays', () => {
+        assertGenerated(RP.array, null);
+        assertGenerated(RP.array.isRequired, ['']);
+    });
+
+    it('can generate objects', () => {
+        assertGenerated(RP.object, null);
+        assertGenerated(RP.object.isRequired, {'key': ''});
+    });
+
+    it('can generate arrays of numbers', () => {
+        assertGenerated(RP.arrayOf(RP.number.isRequired), null);
+        assertGenerated(RP.arrayOf(RP.number.isRequired).isRequired,
+                        [0]);
+    });
+
+    it('can generate objects of numbers', () => {
+        assertGenerated(RP.objectOf(RP.number.isRequired), null);
+        assertGenerated(RP.objectOf(RP.number.isRequired).isRequired,
+                        {key: 0});
+    });
+
+    it('can generate shapes', () => {
+        const type = RP.shape({
+            nullable: RP.string,
+            s: RP.string.isRequired,
+            n: RP.number.isRequired
+        });
+
+        assertGenerated(type, null);
+        assertGenerated(type.isRequired,
+                        {nullable: null, s: "", n: 0});
+    });
+
+    it('defaults to returning a string for custom propTypes', () => {
+        assertGenerated(() => {}, '');
     });
 });

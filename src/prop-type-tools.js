@@ -108,9 +108,117 @@ const valueSatisfiesType = (value, inferredType) => {
     return !(maybeError instanceof Error);
 };
 
+const _generateValue = (inferredType, name, config) => {
+    let generatorType = 'string';
+    let required = true;
+
+    if (inferredType && inferredType.type) {
+        required = !!inferredType.required;
+
+        if (config.hasOwnProperty(inferredType.type)) {
+            generatorType = inferredType.type;
+        }
+    }
+
+    return config[generatorType](name,
+                                 required,
+                                 (t, name) => _generateValue(t, name, config),
+                                 inferredType);
+};
+
+/**
+ * Given an inferred type and an optional configuration object, return a value
+ * satisfying that type.
+ */
+const generateValueForType = (inferredType, name, config = {}) => {
+    const fullConfig = {};
+    Object.assign(fullConfig, generateValueForType.staticDefaults, config);
+    return _generateValue(inferredType, name, fullConfig);
+};
+
+// Generators all have the signature
+//
+//      (name, isRequired, generator, inferredType) => value
+//
+// Additional arguments are used in some to allow re-use by other generators.
+generateValueForType.staticDefaults = {
+    string(name, isRequired) {
+        return isRequired ? '' : null;
+    },
+    number(name, isRequired) {
+        return isRequired ? 0 : null;
+    },
+    bool(name, isRequired) {
+        return isRequired ? false : null;
+    },
+    array(name, isRequired, generator, inferredType,
+          length=1, childType=null) {
+        if (!isRequired) {
+            return null;
+        }
+        const ret = [];
+        for (let i = 0; i < length; i++) {
+            ret.push(generator(childType, `${name}.${i}`));
+        }
+        return ret;
+    },
+    object(name, isRequired, generator, inferredType,
+           length=1, childType=null, keyGenerator=() => 'key') {
+        if (!isRequired) {
+            return null;
+        }
+        const ret = {};
+        for (let i = 0; i < length; i++) {
+            const keyPrefix = keyGenerator();
+            let key = keyPrefix;
+            for (let j = 2; ret.hasOwnProperty(key); j++) {
+                key = `${keyPrefix}_${j}`;
+            }
+            ret[keyGenerator(name)] = generator(childType, `${name}.${key}`);
+        }
+        return ret;
+    },
+    arrayOf(name, isRequired, generator, inferredType,
+            length=1) {
+        return generateValueForType.staticDefaults
+                    .array(name,
+                           isRequired,
+                           generator,
+                           inferredType,
+                           length,
+                           inferredType.args[0]);
+    },
+    objectOf(name, isRequired, generator, inferredType,
+             length=1, keyGenerator) {
+        return generateValueForType.staticDefaults
+                    .object(name,
+                           isRequired,
+                           generator,
+                           inferredType,
+                           length,
+                           inferredType.args[0],
+                           keyGenerator);
+    },
+    shape(name, isRequired, generator, inferredType) {
+        if (!isRequired) {
+            return null;
+        }
+        const ret = {};
+        const shapeTypes = inferredType.args[0];
+        for (let key in shapeTypes) {
+            if (!shapeTypes.hasOwnProperty(key)) {
+                continue;
+            }
+            ret[key] = generator(shapeTypes[key], `${name}.${key}`);
+        }
+        return ret;
+    },
+};
+
 module.exports = {
     patch,
     inferType,
     inferTypesForComponent,
     valueSatisfiesType,
+    generateValueForType
 };
