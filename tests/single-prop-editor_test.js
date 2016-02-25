@@ -42,11 +42,11 @@ describe('SinglePropEditor', () => {
         clock.restore();
     });
 
-    const assertValue = (expected, cursor=[]) => {
+    const assertValue = (expected, cursor = []) => {
         sinon.assert.calledWith(onChangeSpy, cursor, expected);
     };
 
-    const assertChange = (input, value, cursor=[]) => {
+    const assertChange = (input, value, cursor = []) => {
         change(input, value);
         clock.tick(1000);  // Wait for any debounced-ness to finish up
         assertValue(value, cursor);
@@ -65,39 +65,39 @@ describe('SinglePropEditor', () => {
     it('can edit fields with React.PropTypes.string', () => {
         const component = render(RP.string.isRequired);
         const input = findByTag(component, 'input');
-        assertChange(input, 'hello')
+        assertChange(input, 'hello');
     });
 
     it('can edit fields with React.PropTypes.element', () => {
         const component = render(RP.element.isRequired);
         const input = findByTag(component, 'input');
-        assertChange(input, 'hello')
+        assertChange(input, 'hello');
     });
 
     it('can edit fields with React.PropTypes.node', () => {
         const component = render(RP.node.isRequired);
         const input = findByTag(component, 'input');
-        assertChange(input, 'hello')
+        assertChange(input, 'hello');
     });
 
     it('can edit fields with React.PropTypes.bool', () => {
         const component = render(RP.bool.isRequired);
         const input = findByTag(component, 'input');
-        assertChange(input, true)
+        assertChange(input, true);
     });
 
     it('can edit fields with React.PropTypes.oneOf', () => {
         const component = render(RP.oneOf(['a', 'b']));
         const input = findByTag(component, 'select');
-        assertChange(input, 'a')
+        assertChange(input, 'a');
     });
 
     it('can edit fields within React.PropTypes.arrayOf(...)', () => {
         const component = render(RP.arrayOf(RP.string.isRequired).isRequired,
                                  ['a', 'b']);
         const inputs = scryByTag(component, 'input');
-        assertChange(inputs[0], 'c', [0])
-        assertChange(inputs[1], 'd', [1])
+        assertChange(inputs[0], 'c', [0]);
+        assertChange(inputs[1], 'd', [1]);
     });
 
     it('can remove entries within React.PropTypes.arrayOf(...)', () => {
@@ -123,7 +123,7 @@ describe('SinglePropEditor', () => {
     it('can edit fields within React.PropTypes.shape(...)', () => {
         const component = render(RP.shape({
             'a': RP.string.isRequired,
-            'b': RP.string.isRequired
+            'b': RP.string.isRequired,
         }).isRequired, {
             a: 'apple',
             b: 'banana',

@@ -40,7 +40,7 @@ const selectedComponent = (state = null, action) => {
                 return {
                     ...state,
                     reference: action.reference,
-                    types: inferTypesForComponent(action.reference)
+                    types: inferTypesForComponent(action.reference),
                 };
             }
 
@@ -50,7 +50,7 @@ const selectedComponent = (state = null, action) => {
             if (action.key === state.key) {
                 return {
                     ...state,
-                    fixtures: action.fixtures
+                    fixtures: action.fixtures,
                 };
             }
 
@@ -63,8 +63,8 @@ const selectedComponent = (state = null, action) => {
                     ...state.fixtures,
                     instances: icepick.assocIn(state.fixtures.instances,
                                                cursor,
-                                               newValue)
-                }
+                                               newValue),
+                },
             };
 
         case constants.ADD_FIXTURE:
@@ -74,8 +74,8 @@ const selectedComponent = (state = null, action) => {
                 ...state,
                 fixtures: {
                     ...state.fixtures,
-                    instances: state.fixtures.instances.concat([props])
-                }
+                    instances: state.fixtures.instances.concat([props]),
+                },
             };
     }
     return state;
@@ -87,14 +87,14 @@ function logger({ getState }) {
         console.log('will dispatch', action);
 
         // Call the next dispatch method in the middleware chain.
-        let returnValue = next(action);
+        const returnValue = next(action);
 
         console.log('state after dispatch', getState());
 
         // This will likely be the action itself, unless
         // a middleware further in chain changed it.
-        return returnValue
-    }
+        return returnValue;
+    };
 }
 
 const store = combineReducers({
@@ -105,8 +105,8 @@ const store = combineReducers({
 const createSandboxStore = (includerLogger = true) => {
     const middleware = (includerLogger ?
                             [thunkMiddleware, logger] :
-                            [thunkMiddleware])
+                            [thunkMiddleware]);
     return applyMiddleware(...middleware)(createStore)(store);
-}
+};
 
 module.exports = createSandboxStore;

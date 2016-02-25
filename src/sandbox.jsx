@@ -47,7 +47,7 @@ const mapDispatchToProps = (dispatch, ownProps) => {
         onFixtureAdd: (...args) => {
             dispatch(actions.addFixture(...args));
         },
-    }
+    };
 };
 
 const ConnectedSandboxDisplay = connect(
@@ -89,7 +89,7 @@ const patchReactWithFakeErrorBoundaries = () => {
             color: 'black',
             whiteSpace: 'pre',
             textAlign: 'left',
-        }
+        },
     });
 };
 
@@ -143,7 +143,7 @@ const Sandbox = React.createClass({
             getComponentList,
             getComponentReference,
             getFixtureListReference,
-            urlRoot
+            urlRoot,
         } = this.props;
 
         this.store.dispatch(actions.loadComponentList(getComponentList));
@@ -190,7 +190,7 @@ const Sandbox = React.createClass({
                 generator={PropTypeTools.generateRandomValueForType}
             />
         </Provider>;
-    }
+    },
 });
 
 module.exports = Sandbox;

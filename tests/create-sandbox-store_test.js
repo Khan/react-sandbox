@@ -7,18 +7,18 @@ const { patch } = require("../src/prop-type-tools.js");
 
 const SomeComponent = React.createClass({
     propTypes: {
-        a: React.PropTypes.string
+        a: React.PropTypes.string,
     },
     render() {
         return <div />;
-    }
+    },
 });
 
 const expectedComponentTypes = {
     a: {
         type: 'string',
-        required: false
-    }
+        required: false,
+    },
 };
 
 const someFixtures = {instances: [{a: 1}]};
@@ -65,7 +65,7 @@ describe('createSandboxStore', () => {
                 return x.map(clean);
             } else if (typeof x === 'object') {
                 const ret = {};
-                for (let key in x) {
+                for (const key in x) {
                     if (!x.hasOwnProperty(key) ||
                         key === '__propType') {
 
@@ -91,7 +91,7 @@ describe('createSandboxStore', () => {
     it('initializes sensibly', () => {
         return assertStore({
             componentList: null,
-            selectedComponent: null
+            selectedComponent: null,
         });
     });
 
@@ -100,19 +100,19 @@ describe('createSandboxStore', () => {
 
         return assertStore({
             componentList: null,
-            selectedComponent: null
+            selectedComponent: null,
         }).then(() => {
             resolveComponentList([
                 ['big-spinner.jsx', 'BigSpinner'],
-                ['small-spinner.jsx', 'SmallSpinner']
+                ['small-spinner.jsx', 'SmallSpinner'],
             ]);
 
             return assertStore({
                 componentList: [
                     ['big-spinner.jsx', 'BigSpinner'],
-                    ['small-spinner.jsx', 'SmallSpinner']
+                    ['small-spinner.jsx', 'SmallSpinner'],
                 ],
-                selectedComponent: null
+                selectedComponent: null,
             });
         });
     });
@@ -128,8 +128,8 @@ describe('createSandboxStore', () => {
                 key: 'big-spinner.jsx',
                 reference: null,
                 fixtures: null,
-                types: null
-            }
+                types: null,
+            },
         }).then(() => {
             resolveComponentReference(SomeComponent);
 
@@ -139,8 +139,8 @@ describe('createSandboxStore', () => {
                     key: 'big-spinner.jsx',
                     reference: SomeComponent,
                     types: expectedComponentTypes,
-                    fixtures: null
-                }
+                    fixtures: null,
+                },
             });
         }).then(() => {
             resolveFixtureListReference(someFixtures);
@@ -151,8 +151,8 @@ describe('createSandboxStore', () => {
                     key: 'big-spinner.jsx',
                     reference: SomeComponent,
                     types: expectedComponentTypes,
-                    fixtures: someFixtures
-                }
+                    fixtures: someFixtures,
+                },
             });
         });
     });
@@ -169,9 +169,9 @@ describe('createSandboxStore', () => {
             selectedComponent: {
                 key: 'big-spinner.jsx',
                 reference: SomeComponent,
-                    types: expectedComponentTypes,
+                types: expectedComponentTypes,
                 fixtures: someFixtures,
-            }
+            },
         }).then(() => {
             store.dispatch(actions.updateFixture([0, 'a'], 2));
 
@@ -182,9 +182,9 @@ describe('createSandboxStore', () => {
                     reference: SomeComponent,
                     types: expectedComponentTypes,
                     fixtures: {
-                        instances: [{a: 2}]
-                    }
-                }
+                        instances: [{a: 2}],
+                    },
+                },
             });
         });
     });
@@ -201,9 +201,9 @@ describe('createSandboxStore', () => {
             selectedComponent: {
                 key: 'big-spinner.jsx',
                 reference: SomeComponent,
-                    types: expectedComponentTypes,
+                types: expectedComponentTypes,
                 fixtures: someFixtures,
-            }
+            },
         }).then(() => {
             store.dispatch(actions.addFixture({a: 2}));
 
@@ -214,9 +214,9 @@ describe('createSandboxStore', () => {
                     reference: SomeComponent,
                     types: expectedComponentTypes,
                     fixtures: {
-                        instances: [{a: 1}, {a: 2}]
-                    }
-                }
+                        instances: [{a: 1}, {a: 2}],
+                    },
+                },
             });
         });
     });

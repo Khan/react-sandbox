@@ -22,7 +22,7 @@ const PropEditor = React.createClass({
         // Cursor to the data this binds to in the fixtures.
         cursor: RP.arrayOf(RP.oneOfType([
             RP.string.isRequired,
-            RP.number.isRequired
+            RP.number.isRequired,
         ]).isRequired).isRequired,
 
         // The type of the prop to edit. This will match the return
@@ -36,7 +36,7 @@ const PropEditor = React.createClass({
             componentProps,
             onChange,
             cursor,
-            types
+            types,
         } = this.props;
 
         return <div>
@@ -48,10 +48,10 @@ const PropEditor = React.createClass({
                     value={componentProps[key]}
                     onChange={onChange}
                     cursor={cursor.concat([key])}
-                />
+                />;
             })}
         </div>;
-    }
+    },
 });
 
 module.exports = PropEditor;

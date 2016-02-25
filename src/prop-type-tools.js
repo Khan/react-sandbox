@@ -8,7 +8,9 @@
  */
 
 const patch = (PropTypes) => {
-    if (PropTypes.__isPatchedBySandbox) return;
+    if (PropTypes.__isPatchedBySandbox) {
+        return;
+    }
 
     Object.keys(PropTypes).forEach((key) => {
         const orig = PropTypes[key];
@@ -20,12 +22,12 @@ const patch = (PropTypes) => {
         if (orig.isRequired != null) {
             orig.__sandbox_meta = {
                 type: key,
-                required: false
+                required: false,
             };
             orig.isRequired.__sandbox_meta = {
                 type: key,
-                required: true
-            }
+                required: true,
+            };
         } else {
             PropTypes[key] = (...args) => {
                 const ret = orig(...args);
@@ -130,7 +132,7 @@ const _generateValue = (inferredType, path, config) => {
  * Given an inferred type and an optional configuration object, return a value
  * satisfying that type.
  */
-const generateValueForType = (inferredType, path=[], config = {}) => {
+const generateValueForType = (inferredType, path = [], config = {}) => {
     const fullConfig = {};
     Object.assign(fullConfig, generateValueForType.staticDefaults, config);
     return _generateValue(inferredType, path, fullConfig);
@@ -152,7 +154,7 @@ generateValueForType.staticDefaults = {
         return isRequired ? false : null;
     },
     array(path, isRequired, generator, inferredType,
-          length=1, childType=null) {
+          length = 1, childType = null) {
         if (!isRequired) {
             return null;
         }
@@ -163,7 +165,7 @@ generateValueForType.staticDefaults = {
         return ret;
     },
     object(path, isRequired, generator, inferredType,
-           length=1, childType=null, keyGenerator=() => 'key') {
+           length = 1, childType = null, keyGenerator = () => 'key') {
         if (!isRequired) {
             return null;
         }
@@ -205,14 +207,14 @@ generateValueForType.staticDefaults = {
         }
         const ret = {};
         const shapeTypes = inferredType.args[0];
-        for (let key in shapeTypes) {
+        for (const key in shapeTypes) {
             if (!shapeTypes.hasOwnProperty(key)) {
                 continue;
             }
             ret[key] = generator(shapeTypes[key], path.concat([key]));
         }
         return ret;
-    }
+    },
 };
 
 const randomMaybe = (isRequired, value) => {
@@ -236,7 +238,7 @@ generateValueForType.randomDefaults = {
         return randomMaybe(isRequired, [
             randomChoice(ADJECTIVES_1),
             randomChoice(ADJECTIVES_2),
-            randomChoice(ANIMALS)
+            randomChoice(ANIMALS),
         ].join(' '));
     },
     number(path, isRequired) {
@@ -246,7 +248,7 @@ generateValueForType.randomDefaults = {
         return randomMaybe(isRequired, Math.random() > 0.5);
     },
     array(path, isRequired, generator, inferredType,
-          length=1, childType=null) {
+          length = 1, childType = null) {
         return randomMaybe(isRequired,
                            generateValueForType.staticDefaults
                                 .array(path,
@@ -257,7 +259,7 @@ generateValueForType.randomDefaults = {
                                        childType));
     },
     object(path, isRequired, generator, inferredType,
-           length=1, childType=null, keyGenerator=() => 'key') {
+           length = 1, childType = null, keyGenerator = () => 'key') {
         return randomMaybe(isRequired,
                            generateValueForType.staticDefaults
                                 .object(path,
@@ -306,7 +308,7 @@ generateValueForType.randomDefaults = {
 
 // TODO(jlfwong): Reorganize this to avoid the Object.assign
 // call on every value generation.
-const generateRandomValueForType = (inferredType, path=[], config = {}) => {
+const generateRandomValueForType = (inferredType, path = [], config = {}) => {
     const fullConfig = {};
     Object.assign(fullConfig,
                   generateValueForType.staticDefaults,
@@ -381,7 +383,7 @@ const ANIMALS = [
     "Blobfish",
     "Platypus",
     "Shoebill",
-    "Yeti Crab"
+    "Yeti Crab",
 ];
 
 
@@ -391,5 +393,5 @@ module.exports = {
     inferTypesForComponent,
     valueSatisfiesType,
     generateValueForType,
-    generateRandomValueForType
+    generateRandomValueForType,
 };

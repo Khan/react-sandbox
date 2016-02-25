@@ -6,7 +6,7 @@ describe('PureRenderMixinWithCursor.shouldComponentUpdate', () => {
     const test = (cur, next) => {
         return PureRenderMixinWithCursor.shouldComponentUpdate.apply(cur, [
             next.props,
-            next.state
+            next.state,
         ]);
     };
 
@@ -21,60 +21,60 @@ describe('PureRenderMixinWithCursor.shouldComponentUpdate', () => {
     it('returns true if props change shallowly', () => {
         assertWillUpdate({
             props: {a: 1},
-            state: {}
+            state: {},
         }, {
             props: {a: 2},
-            state: {}
+            state: {},
         });
     });
 
     it('returns false if props remain constant', () => {
         assertWillNotUpdate({
             props: {a: 1},
-            state: {}
+            state: {},
         }, {
             props: {a: 1},
-            state: {}
+            state: {},
         });
     });
 
     it('returns true if props state changes shallowly', () => {
         assertWillUpdate({
             props: {},
-            state: {b: 1}
+            state: {b: 1},
         }, {
             props: {},
-            state: {b: 2}
+            state: {b: 2},
         });
     });
 
     it('returns false if props state remain constant', () => {
         assertWillNotUpdate({
             props: {},
-            state: {b: 1}
+            state: {b: 1},
         }, {
             props: {},
-            state: {b: 1}
+            state: {b: 1},
         });
     });
 
     it('returns true if cursor changes deeply', () => {
         assertWillUpdate({
             props: {cursor: ['a']},
-            state: {}
+            state: {},
         }, {
             props: {cursor: ['a', 1]},
-            state: {}
+            state: {},
         });
     });
 
     it('returns false if cursor remains constant', () => {
         assertWillNotUpdate({
             props: {cursor: ['a']},
-            state: {}
+            state: {},
         }, {
             props: {cursor: ['a']},
-            state: {}
+            state: {},
         });
     });
 

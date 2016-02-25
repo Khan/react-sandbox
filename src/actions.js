@@ -10,13 +10,13 @@ const constants = require("./constants.js");
 const loadComponentList = (getComponentList) => {
     return (dispatch, getState) => {
         dispatch({
-            type: constants.COMPONENT_LIST_WILL_LOAD
+            type: constants.COMPONENT_LIST_WILL_LOAD,
         });
 
         getComponentList().then(components => {
             dispatch({
                 type: constants.COMPONENT_LIST_DID_LOAD,
-                components
+                components,
             });
         });
     };
@@ -32,14 +32,14 @@ const selectComponent = (key,
     return (dispatch, getState) => {
         dispatch({
             type: constants.COMPONENT_SELECTED,
-            key
+            key,
         });
 
         getComponentReference(key).then(reference => {
             dispatch({
                 type: constants.COMPONENT_REFERENCE_DID_LOAD,
                 key,
-                reference
+                reference,
             });
         });
 
@@ -47,7 +47,7 @@ const selectComponent = (key,
             dispatch({
                 type: constants.FIXTURES_DID_LOAD,
                 key,
-                fixtures
+                fixtures,
             });
         });
     };
@@ -70,7 +70,7 @@ const updateFixture = (cursor, newValue) => {
 const addFixture = (props) => {
     return {
         type: constants.ADD_FIXTURE,
-        props
+        props,
     };
 };
 
@@ -78,5 +78,5 @@ module.exports = {
     loadComponentList,
     selectComponent,
     updateFixture,
-    addFixture
+    addFixture,
 };

@@ -10,7 +10,7 @@ const { StyleSheet, css } = require("aphrodite");
 const PureRenderMixinWithCursor = require("./pure-render-mixin-with-cursor.js");
 const {
     valueSatisfiesType,
-    generateRandomValueForType
+    generateRandomValueForType,
 } = require("./prop-type-tools.js");
 
 const RP = React.PropTypes;
@@ -29,7 +29,7 @@ const debounce = (fn, wait) => {
 const DebouncedInput = React.createClass({
     getInitialState() {
         return {
-            internalValue: this.props.value
+            internalValue: this.props.value,
         };
     },
 
@@ -47,7 +47,7 @@ const DebouncedInput = React.createClass({
         // Only over-ride the internal value if the element is not focused.
         if (ReactDOM.findDOMNode(this) !== document.activeElement) {
             this.setState({
-                internalValue: nextProps.value
+                internalValue: nextProps.value,
             });
         }
     },
@@ -58,7 +58,7 @@ const DebouncedInput = React.createClass({
             onChange={this.handleChange}
             value={this.state.internalValue}
         />;
-    }
+    },
 });
 
 const FIELD_RENDERERS = (() => {
@@ -80,7 +80,7 @@ const FIELD_RENDERERS = (() => {
                 onChange={(ev) => onChange(cursor, ev.target.checked)}
             />
             {JSON.stringify(value)}
-        </div>
+        </div>;
     };
 
     const number = ({value, cursor, onChange}) => {
@@ -108,7 +108,7 @@ const FIELD_RENDERERS = (() => {
             {type.args[0].map(option => {
                 return <option key={option} value={option}>
                     {option}
-                </option>
+                </option>;
             })}
         </select>;
     };
@@ -126,8 +126,9 @@ const FIELD_RENDERERS = (() => {
                     <button onClick={() => {
                         onChange(cursor,
                                  arrayVal.slice(0, index)
-                                 .concat(arrayVal.slice(index + 1)))
-                    }}>
+                                 .concat(arrayVal.slice(index + 1)));
+                    }}
+                    >
                         x
                     </button>
                     <div className={css(styles.grow)}>
@@ -218,7 +219,7 @@ const FIELD_RENDERERS = (() => {
         instanceOf,
         func,
         unknown,
-        nullable
+        nullable,
     };
 
 })();
@@ -235,7 +236,7 @@ const SinglePropEditor = React.createClass({
                 type: RP.string.isRequired,
                 required: RP.bool.isRequired,
                 args: RP.array(RP.object.isRequired),
-            }).isRequired
+            }).isRequired,
         ]).isRequired,
 
         // The name of the prop
@@ -244,7 +245,7 @@ const SinglePropEditor = React.createClass({
         // Cursor to the data this binds to in the fixtures.
         cursor: RP.arrayOf(RP.oneOfType([
             RP.string.isRequired,
-            RP.number.isRequired
+            RP.number.isRequired,
         ]).isRequired).isRequired,
 
         // The current value of this prop.
@@ -259,7 +260,7 @@ const SinglePropEditor = React.createClass({
 
     getDefaultProps() {
         return {
-            ancestorValid: false
+            ancestorValid: false,
         };
     },
 
@@ -278,7 +279,7 @@ const SinglePropEditor = React.createClass({
 
         const props = {
             ...this.props,
-            ancestorValid: valid
+            ancestorValid: valid,
         };
 
         const fieldEditor = type.required ?
@@ -286,12 +287,13 @@ const SinglePropEditor = React.createClass({
             FIELD_RENDERERS.nullable(inputType, props);
 
         return <div className={css(styles.singleField,
-                                   (!valid) && styles.invalidField)}>
+                                   (!valid) && styles.invalidField)}
+        >
             <span className={css(styles.nameLabel)}>
                 {name}
             </span>
             {fieldEditor}
-        </div>
+        </div>;
     },
 });
 
@@ -304,7 +306,7 @@ const styles = StyleSheet.create({
         background: 'white',
     },
     invalidField: {
-        background: 'rgba(255, 0, 0, 0.4)'
+        background: 'rgba(255, 0, 0, 0.4)',
     },
     nullableField: {
         display: 'flex',
@@ -322,15 +324,15 @@ const styles = StyleSheet.create({
     },
     arrayItem: {
         display: 'flex',
-        alignItems: 'flex-start'
+        alignItems: 'flex-start',
     },
     grow: {
-        flexGrow: 1
+        flexGrow: 1,
     },
     stringInput: {
         boxSizing: 'border-box',
         width: '95%',
-    }
+    },
 });
 
 module.exports = SinglePropEditor;

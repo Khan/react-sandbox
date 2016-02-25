@@ -50,10 +50,10 @@ const SandboxInstance = React.createClass({
         // opaque.
         cursor: RP.arrayOf(RP.oneOfType([
             RP.string.isRequired,
-            RP.number.isRequired
+            RP.number.isRequired,
         ]).isRequired).isRequired,
 
-        types: PropEditor.propTypes.types
+        types: PropEditor.propTypes.types,
     },
 
     render() {
@@ -63,7 +63,7 @@ const SandboxInstance = React.createClass({
             callbacksToLog,
             onFixtureUpdate,
             cursor,
-            types
+            types,
         } = this.props;
 
         const propsToPass = {...props};
@@ -97,7 +97,7 @@ const SandboxInstance = React.createClass({
                     <Component {...propsToPass} />}
             </div>
         </div>;
-    }
+    },
 });
 
 const styles = StyleSheet.create({
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
         color: 'black',
         whiteSpace: 'pre',
         textAlign: 'left',
-    }
+    },
 });
 
 module.exports = SandboxInstance;

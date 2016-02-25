@@ -13,13 +13,13 @@ const emptyList = Object.freeze([]);
 
 const generateProps = (types, valueGenerator) => {
     const ret = {};
-    for (let key in types) {
+    for (const key in types) {
         if (!types.hasOwnProperty(key)) {
             continue;
         }
 
         ret[key] = valueGenerator(types[key], [key]);
-    };
+    }
     return ret;
 };
 
@@ -42,7 +42,7 @@ const SandboxDisplay = React.createClass({
             // A list of instances of props to pass to the component
             fixtures: RP.shape({
                 instances: RP.arrayOf(RP.object.isRequired).isRequired,
-                log: RP.arrayOf(RP.string.isRequired)
+                log: RP.arrayOf(RP.string.isRequired),
             }),
         }),
 
@@ -72,7 +72,7 @@ const SandboxDisplay = React.createClass({
             onComponentSelect,
             onFixtureUpdate,
             onFixtureAdd,
-            types
+            types,
         } = this.props;
 
         if (!componentList) {
@@ -116,7 +116,7 @@ const SandboxDisplay = React.createClass({
                                 Add new fixture
                             </button>
                         </div>
-                    </div>
+                    </div>;
                 }
             }
         }
@@ -143,11 +143,11 @@ const SandboxDisplay = React.createClass({
 const styles = StyleSheet.create({
     root: {
         textAlign: 'center',
-        padding: 20
+        padding: 20,
     },
     addButtonContainer: {
         borderTop: '1px dotted black',
-    }
+    },
 });
 
 module.exports = SandboxDisplay;

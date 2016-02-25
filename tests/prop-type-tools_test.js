@@ -7,7 +7,7 @@ const {
     inferTypesForComponent,
     valueSatisfiesType,
     generateValueForType,
-    generateRandomValueForType
+    generateRandomValueForType,
 } = require("../src/prop-type-tools.js");
 
 const RP = React.PropTypes;
@@ -26,7 +26,7 @@ describe('inferType', () => {
             return x.map(clean);
         } else if (typeof x === 'object') {
             const ret = {};
-            for (let key in x) {
+            for (const key in x) {
                 if (!x.hasOwnProperty(key) ||
                     key === '__propType') {
 
@@ -48,7 +48,7 @@ describe('inferType', () => {
     const assertTypes = (propTypes, expected) => {
         const TestComponent = React.createClass({
             propTypes,
-            render() {}
+            render() {},
         });
         assert.deepEqual(clean(inferTypesForComponent(TestComponent)),
                          expected);
@@ -61,14 +61,14 @@ describe('inferType', () => {
         it(`can infer type of React.PropTypes.${type}`, () => {
             assertSingleType(RP[type], {
                 type: type,
-                required: false
+                required: false,
             });
         });
 
         it(`can infer type of React.PropTypes.${type}.isRequired`, () => {
             assertSingleType(RP[type].isRequired, {
                 type: type,
-                required: true
+                required: true,
             });
         });
     });
@@ -80,33 +80,33 @@ describe('inferType', () => {
             args: [{
                 a: {
                     type: 'bool',
-                    required: false
+                    required: false,
                 },
                 b: {
                     type: 'string',
-                    required: false
-                }
-            }]
+                    required: false,
+                },
+            }],
         });
     });
 
     it('can infer type of React.PropTypes.shape(...).isRequired', () => {
         assertSingleType(RP.shape({
             a: RP.bool.isRequired,
-            b: RP.string
+            b: RP.string,
         }).isRequired, {
             type: 'shape',
             required: true,
             args: [{
                 a: {
                     type: 'bool',
-                    required: true
+                    required: true,
                 },
                 b: {
                     type: 'string',
-                    required: false
-                }
-            }]
+                    required: false,
+                },
+            }],
         });
     });
 
@@ -116,8 +116,8 @@ describe('inferType', () => {
             required: false,
             args: [{
                 type: 'bool',
-                required: false
-            }]
+                required: false,
+            }],
         });
     });
 
@@ -127,8 +127,8 @@ describe('inferType', () => {
             required: true,
             args: [{
                 type: 'bool',
-                required: true
-            }]
+                required: true,
+            }],
         });
     });
 
@@ -138,8 +138,8 @@ describe('inferType', () => {
             required: false,
             args: [{
                 type: 'bool',
-                required: false
-            }]
+                required: false,
+            }],
         });
     });
 
@@ -149,8 +149,8 @@ describe('inferType', () => {
             required: true,
             args: [{
                 type: 'bool',
-                required: true
-            }]
+                required: true,
+            }],
         });
     });
 
@@ -160,7 +160,7 @@ describe('inferType', () => {
         assertSingleType(RP.instanceOf(SomeClass), {
             type: 'instanceOf',
             required: false,
-            args: [SomeClass]
+            args: [SomeClass],
         });
     });
 
@@ -170,7 +170,7 @@ describe('inferType', () => {
         assertSingleType(RP.instanceOf(SomeClass).isRequired, {
             type: 'instanceOf',
             required: true,
-            args: [SomeClass]
+            args: [SomeClass],
         });
     });
 
@@ -178,7 +178,7 @@ describe('inferType', () => {
         assertSingleType(RP.oneOf(['a', 'b']), {
             type: 'oneOf',
             required: false,
-            args: [['a', 'b']]
+            args: [['a', 'b']],
         });
     });
 
@@ -186,7 +186,7 @@ describe('inferType', () => {
         assertSingleType(RP.oneOf(['a', 'b']).isRequired, {
             type: 'oneOf',
             required: true,
-            args: [['a', 'b']]
+            args: [['a', 'b']],
         });
     });
 
@@ -200,13 +200,13 @@ describe('inferType', () => {
             }, {
                 type: 'bool',
                 required: false,
-            }]]
+            }]],
         });
     });
 
     it('can infer type of React.PropTypes.oneOfType(...).isRequired', () => {
         assertSingleType(RP.oneOfType([
-            RP.number.isRequired, RP.bool
+            RP.number.isRequired, RP.bool,
         ]).isRequired, {
             type: 'oneOfType',
             required: true,
@@ -216,7 +216,7 @@ describe('inferType', () => {
             }, {
                 type: 'bool',
                 required: false,
-            }]]
+            }]],
         });
     });
 
@@ -232,7 +232,7 @@ describe('inferType', () => {
     it("can infer types of a component's propTypes property", () => {
         assertTypes({
             a: RP.number,
-            b: RP.string
+            b: RP.string,
         }, {
             a: {
                 type: 'number',
@@ -240,8 +240,8 @@ describe('inferType', () => {
             },
             b: {
                 type: 'string',
-                required: false
-            }
+                required: false,
+            },
         });
     });
 });
@@ -327,7 +327,7 @@ describe("generateValueForType", () => {
         const type = RP.shape({
             nullable: RP.string,
             s: RP.string.isRequired,
-            n: RP.number.isRequired
+            n: RP.number.isRequired,
         });
 
         assertGenerated(type, null);
@@ -341,7 +341,7 @@ describe("generateValueForType", () => {
 
     it('can override generators', () => {
         assertGeneratedWithConfig(RP.string.isRequired, {
-            string: () => 'hello'
+            string: () => 'hello',
         }, 'hello');
     });
 
@@ -350,10 +350,10 @@ describe("generateValueForType", () => {
             a: RP.string.isRequired,
             b: RP.string.isRequired,
         }).isRequired, {
-            string: (path) => path[path.length-1],
+            string: (path) => path[path.length - 1],
         }, {
             a: 'a',
-            b: 'b'
+            b: 'b',
         });
     });
 });
@@ -382,8 +382,8 @@ describe("generateRandomValueForType", () => {
                 RP.array.isRequired,
                 RP.object,
                 RP.object.isRequired,
-                RP.oneOf([0,1]),
-                RP.oneOf([0,1]).isRequired,
+                RP.oneOf([0, 1]),
+                RP.oneOf([0, 1]).isRequired,
                 RP.func,
                 RP.func.isRequired,
                 RP.arrayOf(RP.string.isRequired),
@@ -399,6 +399,6 @@ describe("generateRandomValueForType", () => {
                     b: RP.string.isRequired,
                 }).isRequired,
             ].forEach(generate);
-        };
+        }
     });
 });

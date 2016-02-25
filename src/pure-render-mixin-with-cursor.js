@@ -41,7 +41,7 @@ const shallowEqual = (objA, objB, customEquality = {}) => {
     }
 
     return true;
-}
+};
 
 /**
  * A mixin for only updating if props differ shallowly,
@@ -50,7 +50,7 @@ const shallowEqual = (objA, objB, customEquality = {}) => {
 const PureRenderMixinWithCursor = {
     shouldComponentUpdate(nextProps, nextState) {
         const propsEqual = shallowEqual(this.props, nextProps, {
-            cursor: (a, b) => a.join(',') === b.join(',')
+            cursor: (a, b) => a.join(',') === b.join(','),
         });
 
         if (!propsEqual) {
