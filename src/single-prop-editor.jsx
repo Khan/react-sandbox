@@ -174,8 +174,12 @@ const FIELD_RENDERERS = (() => {
         </div>;
     };
 
-    const json = ({value, onChange}) => {
-        return JSON.stringify(value);
+    const unknown = ({value, onChange}) => {
+        try {
+            return JSON.stringify(value);
+        } catch(e) {
+            return value.toString();
+        }
     };
 
     const instanceOf = ({value}) => {
@@ -213,7 +217,7 @@ const FIELD_RENDERERS = (() => {
         shape,
         instanceOf,
         func,
-        json,
+        unknown,
         nullable
     };
 
@@ -265,7 +269,7 @@ const SinglePropEditor = React.createClass({
         // TODO(jlfwong): Adding to objectOf
         // TODO(jlfwong): Drag to re-arrange in arrays
 
-        const inputType = FIELD_RENDERERS[type.type] ? type.type : 'json';
+        const inputType = FIELD_RENDERERS[type.type] ? type.type : 'unknown';
 
         // The validity of this field is unimportant if one of the ancestors
         // validated. This allows us to ignore fields that are invalid when
