@@ -108,7 +108,7 @@ const valueSatisfiesType = (value, inferredType) => {
     return !(maybeError instanceof Error);
 };
 
-const _generateValue = (inferredType, name, config) => {
+const _generateValue = (inferredType, path, config) => {
     let generatorType = 'string';
     let required = true;
 
@@ -120,9 +120,9 @@ const _generateValue = (inferredType, name, config) => {
         }
     }
 
-    return config[generatorType](name,
+    return config[generatorType](path,
                                  required,
-                                 (t, name) => _generateValue(t, name, config),
+                                 (t, path) => _generateValue(t, path, config),
                                  inferredType);
 };
 
@@ -130,39 +130,39 @@ const _generateValue = (inferredType, name, config) => {
  * Given an inferred type and an optional configuration object, return a value
  * satisfying that type.
  */
-const generateValueForType = (inferredType, name, config = {}) => {
+const generateValueForType = (inferredType, path=[], config = {}) => {
     const fullConfig = {};
     Object.assign(fullConfig, generateValueForType.staticDefaults, config);
-    return _generateValue(inferredType, name, fullConfig);
+    return _generateValue(inferredType, path, fullConfig);
 };
 
 // Generators all have the signature
 //
-//      (name, isRequired, generator, inferredType) => value
+//      (path, isRequired, generator, inferredType) => value
 //
 // Additional arguments are used in some to allow re-use by other generators.
 generateValueForType.staticDefaults = {
-    string(name, isRequired) {
+    string(path, isRequired) {
         return isRequired ? '' : null;
     },
-    number(name, isRequired) {
+    number(path, isRequired) {
         return isRequired ? 0 : null;
     },
-    bool(name, isRequired) {
+    bool(path, isRequired) {
         return isRequired ? false : null;
     },
-    array(name, isRequired, generator, inferredType,
+    array(path, isRequired, generator, inferredType,
           length=1, childType=null) {
         if (!isRequired) {
             return null;
         }
         const ret = [];
         for (let i = 0; i < length; i++) {
-            ret.push(generator(childType, `${name}.${i}`));
+            ret.push(generator(childType, path.concat([i])));
         }
         return ret;
     },
-    object(name, isRequired, generator, inferredType,
+    object(path, isRequired, generator, inferredType,
            length=1, childType=null, keyGenerator=() => 'key') {
         if (!isRequired) {
             return null;
@@ -174,32 +174,32 @@ generateValueForType.staticDefaults = {
             for (let j = 2; ret.hasOwnProperty(key); j++) {
                 key = `${keyPrefix}_${j}`;
             }
-            ret[keyGenerator(name)] = generator(childType, `${name}.${key}`);
+            ret[keyGenerator(path)] = generator(childType, path.concat([key]));
         }
         return ret;
     },
-    arrayOf(name, isRequired, generator, inferredType,
-            length=1) {
+    arrayOf(path, isRequired, generator, inferredType,
+            length) {
         return generateValueForType.staticDefaults
-                    .array(name,
+                    .array(path,
                            isRequired,
                            generator,
                            inferredType,
                            length,
                            inferredType.args[0]);
     },
-    objectOf(name, isRequired, generator, inferredType,
-             length=1, keyGenerator) {
+    objectOf(path, isRequired, generator, inferredType,
+             length, keyGenerator) {
         return generateValueForType.staticDefaults
-                    .object(name,
-                           isRequired,
-                           generator,
-                           inferredType,
-                           length,
-                           inferredType.args[0],
-                           keyGenerator);
+                    .object(path,
+                            isRequired,
+                            generator,
+                            inferredType,
+                            length,
+                            inferredType.args[0],
+                            keyGenerator);
     },
-    shape(name, isRequired, generator, inferredType) {
+    shape(path, isRequired, generator, inferredType) {
         if (!isRequired) {
             return null;
         }
@@ -209,16 +209,181 @@ generateValueForType.staticDefaults = {
             if (!shapeTypes.hasOwnProperty(key)) {
                 continue;
             }
-            ret[key] = generator(shapeTypes[key], `${name}.${key}`);
+            ret[key] = generator(shapeTypes[key], path.concat([key]));
         }
         return ret;
     },
 };
+
+const randomMaybe = (isRequired, value) => {
+    // If the prop is not required, return null 1/5 of the time.
+    if (!isRequired && Math.random() < 0.2) {
+        return null;
+    }
+    return value;
+};
+
+const randomChoice = list => list[Math.floor(Math.random() * list.length)];
+
+// TODO(jlfwong): This is a little crazy -- it might be better to only allow
+// overriding of null probability, strings, numbers, booleans, and lengths of
+// things.
+//
+// This also might be less crazy if I switch to object args instead of
+// positional.
+generateValueForType.randomDefaults = {
+    string(path, isRequired) {
+        return randomMaybe(isRequired, [
+            randomChoice(ADJECTIVES_1),
+            randomChoice(ADJECTIVES_2),
+            randomChoice(ANIMALS)
+        ].join(' '));
+    },
+    number(path, isRequired) {
+        return randomMaybe(isRequired, Math.floor(Math.random() * 9));
+    },
+    bool(path, isRequired) {
+        return randomMaybe(isRequired, Math.random() > 0.5);
+    },
+    array(path, isRequired, generator, inferredType,
+          length=1, childType=null) {
+        return randomMaybe(isRequired,
+                           generateValueForType.staticDefaults
+                                .array(path,
+                                       true,
+                                       generator,
+                                       inferredType,
+                                       Math.floor(Math.random() * 9),
+                                       childType));
+    },
+    object(path, isRequired, generator, inferredType,
+           length=1, childType=null, keyGenerator=() => 'key') {
+        return randomMaybe(isRequired,
+                           generateValueForType.staticDefaults
+                                .object(path,
+                                        true,
+                                        generator,
+                                        inferredType,
+                                        Math.floor(Math.random() * 9),
+                                        childType,
+                                        keyGenerator));
+    },
+    arrayOf(path, isRequired, generator, inferredType,
+            length) {
+        return generateValueForType.randomDefaults
+                    .array(path,
+                           isRequired,
+                           generator,
+                           inferredType,
+                           length,
+                           inferredType.args[0]);
+    },
+    objectOf(path, isRequired, generator, inferredType,
+             length, keyGenerator) {
+        return generateValueForType.randomDefaults
+                    .object(path,
+                            isRequired,
+                            generator,
+                            inferredType,
+                            length,
+                            inferredType.args[0],
+                            keyGenerator);
+    },
+    shape(path, isRequired, ...args) {
+        return randomMaybe(isRequired,
+                           generateValueForType.staticDefaults
+                                .shape(path,
+                                       true,
+                                       ...args));
+    },
+};
+
+// TODO(jlfwong): Reorganize this to avoid the Object.assign
+// call on every value generation.
+const generateRandomValueForType = (inferredType, path=[], config = {}) => {
+    const fullConfig = {};
+    Object.assign(fullConfig,
+                  generateValueForType.staticDefaults,
+                  generateValueForType.randomDefaults,
+                  config);
+    return _generateValue(inferredType, path, fullConfig);
+};
+
+const ADJECTIVES_1 = [
+    'Agreeable',
+    'Brave',
+    'Calm',
+    'Delightful',
+    'Eager',
+    'Faithful',
+    'Gentle',
+    'Happy',
+    'Jolly',
+    'Kind',
+    'Lively',
+    'Nice',
+    'Obedient',
+    'Proud',
+    'Relieved',
+    'Silly',
+    'Thankful',
+    'Victorious',
+    'Witty',
+    'Zealous',
+];
+
+const ADJECTIVES_2 = [
+    'Cooing',
+    'Deafening',
+    'Faint',
+    'Hissing',
+    'Loud',
+    'Melodic',
+    'Noisy',
+    'Purring',
+    'Quiet',
+    'Raspy',
+    'Screeching',
+    'Thundering',
+    'Voiceless',
+    'Whispering',
+];
+
+const ANIMALS = [
+    "Leafy seadragon",
+    "Sun Bear",
+    "Komondor Dog",
+    "Angora Rabbit",
+    "Red Panda",
+    "Sloth",
+    "Emperor Tamarin",
+    "White-faced Saki Monkey",
+    "Tapir",
+    "Hagfish",
+    "Star-nosed Mole",
+    "Proboscis Monkey",
+    "Pink Fairy Armadillo",
+    "Axolotl",
+    "Aye-aye",
+    "Alpaca",
+    "Tarsier",
+    "Dumbo Octopus",
+    "Frill-necked Lizard",
+    "Narwhal",
+    "Sucker-footed Bat",
+    "Pygmy Marmoset",
+    "Blobfish",
+    "Platypus",
+    "Shoebill",
+    "Yeti Crab"
+];
+
 
 module.exports = {
     patch,
     inferType,
     inferTypesForComponent,
     valueSatisfiesType,
-    generateValueForType
+    generateValueForType,
+    generateRandomValueForType
 };

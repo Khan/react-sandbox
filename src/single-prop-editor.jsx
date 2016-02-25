@@ -1,10 +1,17 @@
+/**
+ * A component for editing the value of a single (possibly complex) prop of
+ * a component.
+ */
 
 const React = require("react");
 const ReactDOM = require("react-dom");
 const { StyleSheet, css } = require("aphrodite");
 
 const PureRenderMixinWithCursor = require("./pure-render-mixin-with-cursor.js");
-const { valueSatisfiesType } = require("./prop-type-tools.js");
+const {
+    valueSatisfiesType,
+    generateRandomValueForType
+} = require("./prop-type-tools.js");
 
 const RP = React.PropTypes;
 
@@ -130,8 +137,9 @@ const FIELD_RENDERERS = (() => {
             <button
                 key='add'
                 onClick={() => {
-                    // TODO(jlfwong): Add generated props here instead
-                    onChange(cursor, arrayVal.concat([null]));
+                    const nextVal = generateRandomValueForType(type.args[0],
+                                                               cursor);
+                    onChange(cursor, arrayVal.concat([nextVal]));
                 }}
             >
             Add item to {name}

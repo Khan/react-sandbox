@@ -6,7 +6,8 @@ const {
     inferType,
     inferTypesForComponent,
     valueSatisfiesType,
-    generateValueForType
+    generateValueForType,
+    generateRandomValueForType
 } = require("../src/prop-type-tools.js");
 
 const RP = React.PropTypes;
@@ -254,9 +255,13 @@ describe('valueSatisfiesType', () => {
 });
 
 describe("generateValueForType", () => {
-    const generate = (type) => generateValueForType(inferType(type), 'foo');
     const assertGenerated = (type, expected) => {
-        assert.deepEqual(generate(type), expected);
+        assertGeneratedWithConfig(type, {}, expected);
+    };
+
+    const assertGeneratedWithConfig = (type, config, expected) => {
+        const value = generateValueForType(inferType(type), [], config);
+        assert.deepEqual(value, expected);
     };
 
     it('can generate strings', () => {
@@ -326,5 +331,64 @@ describe("generateValueForType", () => {
 
     it('defaults to returning a string for custom propTypes', () => {
         assertGenerated(() => {}, '');
+    });
+
+    it('can override generators', () => {
+        assertGeneratedWithConfig(RP.string.isRequired, {
+            string: () => 'hello'
+        }, 'hello');
+    });
+
+    it('can override generators and use names', () => {
+        assertGeneratedWithConfig(RP.shape({
+            a: RP.string.isRequired,
+            b: RP.string.isRequired,
+        }).isRequired, {
+            string: (path) => path[path.length-1],
+        }, {
+            a: 'a',
+            b: 'b'
+        });
+    });
+});
+
+describe("generateRandomValueForType", () => {
+    const generate = (type, expected) => {
+        generateRandomValueForType(inferType(type), []);
+    };
+
+    it('can generate random values', () => {
+        // Making sensible assertions here is hard, so we'll just run this
+        // a bunch and ensure that it doesn't crash.
+        //
+        // TODO(jlfwong): Force a random seed. Probably still won't want to
+        // write assertions, since they'll still be pretty fragile as
+        // parameters of the randomness get tuned.
+        for (var i = 0; i < 100; i++) {
+            [
+                RP.number,
+                RP.number.isRequired,
+                RP.string,
+                RP.string.isRequired,
+                RP.bool,
+                RP.bool.isRequired,
+                RP.array,
+                RP.array.isRequired,
+                RP.object,
+                RP.object.isRequired,
+                RP.arrayOf(RP.string.isRequired),
+                RP.arrayOf(RP.string.isRequired).isRequired,
+                RP.objectOf(RP.string.isRequired),
+                RP.objectOf(RP.string.isRequired).isRequired,
+                RP.shape({
+                    a: RP.string.isRequired,
+                    b: RP.string.isRequired,
+                }),
+                RP.shape({
+                    a: RP.string.isRequired,
+                    b: RP.string.isRequired,
+                }).isRequired,
+            ].forEach(generate);
+        };
     });
 });

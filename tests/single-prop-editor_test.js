@@ -113,7 +113,11 @@ describe('SinglePropEditor', () => {
                                  ['a', 'b']);
         const buttons = scryByTag(component, 'button');
         click(buttons[buttons.length - 1]);
-        assertValue(['a', 'b', null]);
+
+        assert.deepEqual(onChangeSpy.lastCall.args[1].length, 3);
+        // For now, this is randomly generated, so we can't make sensible
+        // assertions.
+        // assertValue(['a', 'b', null]);
     });
 
     it('can edit fields within React.PropTypes.shape(...)', () => {
