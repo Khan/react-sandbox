@@ -65,21 +65,22 @@ const patchReactWithFakeErrorBoundaries = () => {
     React.__patchedBySandboxForFakeErrorBoundaries = true;
 
     const origCreateClass = React.createClass;
-    React.createClass = (structure) => {
-        const origRender = structure.render;
+    React.createClass = (...args) => {
+        const clazz = origCreateClass(...args);
 
-        return origCreateClass({
-            ...structure,
-            render() {
-                try {
-                    return origRender.call(this);
-                } catch(e) {
-                    return <pre className={css(styles.errorBox)}>
-                        {e.stack}
-                    </pre>;
-                }
+        const render = clazz.prototype.render;
+
+        clazz.prototype.render = function() {
+            try {
+                return render.call(this);
+            } catch(e) {
+                return <pre className={css(styles.errorBox)}>
+                    {e.stack}
+                </pre>;
             }
-        });
+        };
+
+        return clazz;
     };
 
     const styles = StyleSheet.create({

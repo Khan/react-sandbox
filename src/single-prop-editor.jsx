@@ -95,9 +95,15 @@ const FIELD_RENDERERS = (() => {
     };
 
     const oneOf = ({type, value, cursor, onChange}) => {
+        // This might look really unnecessary, but we need it because of type
+        // coercion. `ev.target.value` is always going to be a string, but
+        // `option` may not be, e.g. if you have React.PropTypes.oneOf([0, 1]);
+        const optionToValue = {};
+        type.args[0].forEach(option => { optionToValue[option] = option; });
+
         return <select
             value={value}
-            onChange={(ev) => onChange(cursor, ev.target.value)}
+            onChange={(ev) => onChange(cursor, optionToValue[ev.target.value])}
         >
             {type.args[0].map(option => {
                 return <option key={option} value={option}>
@@ -172,6 +178,14 @@ const FIELD_RENDERERS = (() => {
         return JSON.stringify(value);
     };
 
+    const instanceOf = ({value}) => {
+        return value == null ? '(null)' : value.toString();
+    };
+
+    const func = ({value}) => {
+        return value == null ? '(null)' : value.toString();
+    };
+
     const nullable = (inputType, props) => {
         const {onChange, value, cursor} = props;
 
@@ -197,9 +211,12 @@ const FIELD_RENDERERS = (() => {
         oneOf,
         arrayOf,
         shape,
+        instanceOf,
+        func,
         json,
         nullable
     };
+
 })();
 
 const SinglePropEditor = React.createClass({

@@ -212,7 +212,7 @@ generateValueForType.staticDefaults = {
             ret[key] = generator(shapeTypes[key], path.concat([key]));
         }
         return ret;
-    },
+    }
 };
 
 const randomMaybe = (isRequired, value) => {
@@ -295,6 +295,12 @@ generateValueForType.randomDefaults = {
                                 .shape(path,
                                        true,
                                        ...args));
+    },
+    oneOf(path, isRequired, generator, inferredType) {
+        return randomMaybe(isRequired, randomChoice(inferredType.args[0]));
+    },
+    func(path, isRequired, generator, inferredType) {
+        return randomMaybe(isRequired, () => {});
     },
 };
 

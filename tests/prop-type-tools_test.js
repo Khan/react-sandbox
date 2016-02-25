@@ -317,6 +317,12 @@ describe("generateValueForType", () => {
                         {key: 0});
     });
 
+    it('can generate objects of numbers', () => {
+        assertGenerated(RP.objectOf(RP.number.isRequired), null);
+        assertGenerated(RP.objectOf(RP.number.isRequired).isRequired,
+                        {key: 0});
+    });
+
     it('can generate shapes', () => {
         const type = RP.shape({
             nullable: RP.string,
@@ -376,6 +382,10 @@ describe("generateRandomValueForType", () => {
                 RP.array.isRequired,
                 RP.object,
                 RP.object.isRequired,
+                RP.oneOf([0,1]),
+                RP.oneOf([0,1]).isRequired,
+                RP.func,
+                RP.func.isRequired,
                 RP.arrayOf(RP.string.isRequired),
                 RP.arrayOf(RP.string.isRequired).isRequired,
                 RP.objectOf(RP.string.isRequired),

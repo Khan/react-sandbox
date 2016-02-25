@@ -73,7 +73,7 @@ const SandboxInstance = React.createClass({
             };
         });
 
-        const propErrors = getInvalidProps(component, props);
+        const propErrors = getInvalidProps(component, propsToPass);
 
         const Component = component;
 
@@ -81,7 +81,7 @@ const SandboxInstance = React.createClass({
             <div className={css(styles.propEditorWrapper)}>
                 <PropEditor
                     component={component}
-                    componentProps={props}
+                    componentProps={propsToPass}
                     onChange={onFixtureUpdate}
                     cursor={cursor}
                     types={types}
