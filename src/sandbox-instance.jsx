@@ -1,3 +1,5 @@
+/*eslint-disable react/forbid-prop-types, no-console*/
+
 /**
  * Component to render a single instance of a component using fixture data.
  */
@@ -30,21 +32,13 @@ const getInvalidProps = (component, props) => {
 };
 
 const SandboxInstance = React.createClass({
-    mixins: [PureRenderMixinWithCursor],
-
     propTypes: {
-        // The Component class to render
-        component: RP.func.isRequired,
-
-        // The props for the component
-        props: RP.object.isRequired,
-
         // The props taking function values to respond to by logging to the
         // console.
         callbacksToLog: RP.arrayOf(RP.string.isRequired).isRequired,
 
-        // Called with the new prop values on update
-        onFixtureUpdate: RP.func.isRequired,
+        // The Component class to render
+        component: RP.func.isRequired,
 
         // Cursor to the data this binds to in the fixtures. To be treated as
         // opaque.
@@ -53,8 +47,16 @@ const SandboxInstance = React.createClass({
             RP.number.isRequired,
         ]).isRequired).isRequired,
 
+        // Called with the new prop values on update
+        onFixtureUpdate: RP.func.isRequired,
+
+        // The props for the component
+        props: RP.object.isRequired,
+
         types: PropEditor.propTypes.types,
     },
+
+    mixins: [PureRenderMixinWithCursor],
 
     render() {
         const {

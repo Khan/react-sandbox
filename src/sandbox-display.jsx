@@ -29,6 +29,19 @@ const SandboxDisplay = React.createClass({
         // sandbox.
         componentList: RP.arrayOf(RP.arrayOf(RP.string.isRequired).isRequired),
 
+        // Generator function returning a value given a type and name of the
+        // prop.
+        generator: RP.func.isRequired,
+
+        // Called with the key of the component to select
+        onComponentSelect: RP.func.isRequired,
+
+        // Called with the new prop values to create a fixture with.
+        onFixtureAdd: RP.func.isRequired,
+
+        // Called with the path and prop values of the fixture to update.
+        onFixtureUpdate: RP.func.isRequired,
+
         selectedComponent: RP.shape({
             // A key identifying the currently selected component
             key: RP.string.isRequired,
@@ -46,15 +59,6 @@ const SandboxDisplay = React.createClass({
             }),
         }),
 
-        // Called with the key of the component to select
-        onComponentSelect: RP.func.isRequired,
-
-        // Called with the index and prop values of the fixture to update.
-        onFixtureUpdate: RP.func.isRequired,
-
-        // Generator function returning a value given a type and name of the
-        // prop.
-        generator: RP.func.isRequired,
     },
 
     handleFixtureAdd() {
@@ -71,8 +75,6 @@ const SandboxDisplay = React.createClass({
             selectedComponent,
             onComponentSelect,
             onFixtureUpdate,
-            onFixtureAdd,
-            types,
         } = this.props;
 
         if (!componentList) {

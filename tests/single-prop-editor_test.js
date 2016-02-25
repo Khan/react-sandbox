@@ -1,3 +1,4 @@
+/*eslint-env node,mocha*/
 const jsdom = require('jsdom');
 const React = require('react');
 const TestUtils = require('react-addons-test-utils');
@@ -23,6 +24,8 @@ const change = (input, value) => {
 
 const {click} = TestUtils.Simulate;
 
+const HTML_TEXT = '<!doctype html><html><body></body></html>';
+
 describe('SinglePropEditor', () => {
     let onChangeSpy;
     let clock;
@@ -30,7 +33,7 @@ describe('SinglePropEditor', () => {
     beforeEach(() => {
         patch(React.PropTypes);
 
-        global.document = jsdom.jsdom('<!doctype html><html><body></body></html>');
+        global.document = jsdom.jsdom(HTML_TEXT);
         global.window = document.defaultView;
 
         onChangeSpy = sinon.spy();

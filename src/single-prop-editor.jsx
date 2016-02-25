@@ -27,16 +27,15 @@ const debounce = (fn, wait) => {
 };
 
 const DebouncedInput = React.createClass({
+    propTypes: {
+        onChange: RP.func.isRequired,
+        value: RP.string,
+    },
+
     getInitialState() {
         return {
             internalValue: this.props.value,
         };
-    },
-
-    handleChange(ev) {
-        const value = ev.target.value;
-        this.setState({internalValue: value});
-        this.debouncedOnChange(value);
     },
 
     componentWillMount() {
@@ -50,6 +49,12 @@ const DebouncedInput = React.createClass({
                 internalValue: nextProps.value,
             });
         }
+    },
+
+    handleChange(ev) {
+        const value = ev.target.value;
+        this.setState({internalValue: value});
+        this.debouncedOnChange(value);
     },
 
     render() {
@@ -178,7 +183,7 @@ const FIELD_RENDERERS = (() => {
     const unknown = ({value, onChange}) => {
         try {
             return JSON.stringify(value);
-        } catch(e) {
+        } catch (e) {
             return value.toString();
         }
     };
@@ -225,9 +230,22 @@ const FIELD_RENDERERS = (() => {
 })();
 
 const SinglePropEditor = React.createClass({
-    mixins: [PureRenderMixinWithCursor],
-
     propTypes: {
+        // True if the parent prop editor has valid props. Defaults to false.
+        // This default should only be used for the top-level props.
+        ancestorValid: RP.bool.isRequired,
+
+        // Cursor to the data this binds to in the fixtures.
+        cursor: RP.arrayOf(RP.oneOfType([
+            RP.string.isRequired,
+            RP.number.isRequired,
+        ]).isRequired).isRequired,
+
+        // The name of the prop
+        name: RP.string.isRequired,
+
+        onChange: RP.func.isRequired,
+
         // The type of the prop to edit. This will match the values of return
         // type of inferTypes.
         type: RP.oneOfType([
@@ -239,24 +257,11 @@ const SinglePropEditor = React.createClass({
             }).isRequired,
         ]).isRequired,
 
-        // The name of the prop
-        name: RP.string.isRequired,
-
-        // Cursor to the data this binds to in the fixtures.
-        cursor: RP.arrayOf(RP.oneOfType([
-            RP.string.isRequired,
-            RP.number.isRequired,
-        ]).isRequired).isRequired,
-
         // The current value of this prop.
         value: RP.any,
-
-        onChange: RP.func.isRequired,
-
-        // True if the parent prop editor has valid props. Defaults to false.
-        // This default should only be used for the top-level props.
-        ancestorValid: RP.bool.isRequired,
     },
+
+    mixins: [PureRenderMixinWithCursor],
 
     getDefaultProps() {
         return {

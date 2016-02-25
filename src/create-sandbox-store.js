@@ -1,3 +1,5 @@
+/*eslint-disable no-fallthrough, no-console*/
+
 /**
  * Redux store containing state for the sandbox.
  */

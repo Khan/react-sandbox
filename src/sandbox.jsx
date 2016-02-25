@@ -73,7 +73,7 @@ const patchReactWithFakeErrorBoundaries = () => {
         clazz.prototype.render = function() {
             try {
                 return render.call(this);
-            } catch(e) {
+            } catch (e) {
                 return <pre className={css(styles.errorBox)}>
                     {e.stack}
                 </pre>;
@@ -132,7 +132,7 @@ const Sandbox = React.createClass({
     },
 
     componentWillMount() {
-        const store = this.store = createSandboxStore();
+        this.store = createSandboxStore();
         PropTypeTools.patch(RP);
 
         patchReactWithFakeErrorBoundaries();

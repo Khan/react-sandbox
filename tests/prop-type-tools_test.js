@@ -1,3 +1,4 @@
+/*eslint-env node,mocha*/
 const { assert } = require('chai');
 const React = require('react');
 

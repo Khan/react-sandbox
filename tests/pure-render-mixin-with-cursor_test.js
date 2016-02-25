@@ -1,3 +1,4 @@
+/*eslint-env node,mocha*/
 const { assert } = require('chai');
 
 const PureRenderMixinWithCursor = require("../src/pure-render-mixin-with-cursor.js");
