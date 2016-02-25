@@ -188,4 +188,36 @@ describe('createSandboxStore', () => {
             });
         });
     });
+
+    it('can add fixtures', () => {
+        store.dispatch(actions.selectComponent('big-spinner.jsx',
+                                               getComponentReference,
+                                               getFixtureListReference));
+        resolveComponentReference(SomeComponent);
+        resolveFixtureListReference(someFixtures);
+
+        return assertStore({
+            componentList: null,
+            selectedComponent: {
+                key: 'big-spinner.jsx',
+                reference: SomeComponent,
+                    types: expectedComponentTypes,
+                fixtures: someFixtures,
+            }
+        }).then(() => {
+            store.dispatch(actions.addFixture({a: 2}));
+
+            return assertStore({
+                componentList: null,
+                selectedComponent: {
+                    key: 'big-spinner.jsx',
+                    reference: SomeComponent,
+                    types: expectedComponentTypes,
+                    fixtures: {
+                        instances: [{a: 1}, {a: 2}]
+                    }
+                }
+            });
+        });
+    });
 });

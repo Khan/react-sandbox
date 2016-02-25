@@ -55,16 +55,26 @@ const selectedComponent = (state = null, action) => {
             }
 
         case constants.UPDATE_FIXTURE:
-            const instances = state.fixtures.instances;
             const {cursor, newValue} = action;
 
             return {
                 ...state,
                 fixtures: {
                     ...state.fixtures,
-                    instances: icepick.assocIn(instances,
+                    instances: icepick.assocIn(state.fixtures.instances,
                                                cursor,
                                                newValue)
+                }
+            };
+
+        case constants.ADD_FIXTURE:
+            const {props} = action;
+
+            return {
+                ...state,
+                fixtures: {
+                    ...state.fixtures,
+                    instances: state.fixtures.instances.concat([props])
                 }
             };
     }

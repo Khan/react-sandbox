@@ -61,11 +61,22 @@ const updateFixture = (cursor, newValue) => {
         type: constants.UPDATE_FIXTURE,
         cursor,
         newValue,
-    }
+    };
+};
+
+/**
+ * Update the values of a fixture for the currently selected component.
+ */
+const addFixture = (props) => {
+    return {
+        type: constants.ADD_FIXTURE,
+        props
+    };
 };
 
 module.exports = {
     loadComponentList,
     selectComponent,
-    updateFixture
+    updateFixture,
+    addFixture
 };

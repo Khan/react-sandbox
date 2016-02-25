@@ -21,4 +21,5 @@ module.exports = makeConstants({
     COMPONENT_REFERENCE_DID_LOAD: null,
     FIXTURES_DID_LOAD: null,
     UPDATE_FIXTURE: null,
+    ADD_FIXTURE: null,
 });

@@ -11,6 +11,18 @@ const RP = React.PropTypes;
 
 const emptyList = Object.freeze([]);
 
+const generateProps = (types, valueGenerator) => {
+    const ret = {};
+    for (let key in types) {
+        if (!types.hasOwnProperty(key)) {
+            continue;
+        }
+
+        ret[key] = valueGenerator(types[key], [key]);
+    };
+    return ret;
+};
+
 const SandboxDisplay = React.createClass({
     propTypes: {
         // A list of [label, key] pairs, one per component loadable in the
@@ -39,6 +51,16 @@ const SandboxDisplay = React.createClass({
 
         // Called with the index and prop values of the fixture to update.
         onFixtureUpdate: RP.func.isRequired,
+
+        // Generator function returning a value given a type and name of the
+        // prop.
+        generator: RP.func.isRequired,
+    },
+
+    handleFixtureAdd() {
+        const {selectedComponent, generator, onFixtureAdd} = this.props;
+
+        onFixtureAdd(generateProps(selectedComponent.types, generator));
     },
 
     render() {
@@ -49,6 +71,7 @@ const SandboxDisplay = React.createClass({
             selectedComponent,
             onComponentSelect,
             onFixtureUpdate,
+            onFixtureAdd,
             types
         } = this.props;
 
@@ -88,6 +111,9 @@ const SandboxDisplay = React.createClass({
                             :
                             "No fixtures for this component yet. Add some!"
                         }
+                        <button onClick={this.handleFixtureAdd}>
+                            Add new fixture
+                        </button>
                     </div>
                 }
             }

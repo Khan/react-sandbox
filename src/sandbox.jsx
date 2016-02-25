@@ -41,7 +41,11 @@ const mapDispatchToProps = (dispatch, ownProps) => {
 
         onFixtureUpdate: (...args) => {
             dispatch(actions.updateFixture(...args));
-        }
+        },
+
+        onFixtureAdd: (...args) => {
+            dispatch(actions.addFixture(...args));
+        },
     }
 };
 
@@ -141,6 +145,7 @@ const Sandbox = React.createClass({
             <ConnectedSandboxDisplay
                 getComponentReference={getComponentReference}
                 getFixtureListReference={getFixtureListReference}
+                generator={PropTypeTools.generateRandomValueForType}
             />
         </Provider>;
     }

@@ -114,7 +114,7 @@ describe('SinglePropEditor', () => {
         const buttons = scryByTag(component, 'button');
         click(buttons[buttons.length - 1]);
 
-        assert.deepEqual(onChangeSpy.lastCall.args[2].length, 3);
+        assert.deepEqual(onChangeSpy.lastCall.args[1].length, 3);
         // For now, this is randomly generated, so we can't make sensible
         // assertions.
         // assertValue(['a', 'b', null]);
