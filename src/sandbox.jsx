@@ -14,6 +14,7 @@
 
 const React = require("react");
 const { Provider, connect } = require("react-redux");
+const { StyleSheet, css } = require("aphrodite");
 
 const PropTypeTools = require("./prop-type-tools.js");
 const SandboxDisplay = require("./sandbox-display.jsx");
@@ -53,6 +54,44 @@ const ConnectedSandboxDisplay = connect(
     mapStateToProps,
     mapDispatchToProps
 )(SandboxDisplay);
+
+const patchReactWithFakeErrorBoundaries = () => {
+    // We patch React.createClass as a temporary work around for the
+    // lack of error boundaries. When React 15 lands, we can delete this
+    // and use real error boundaries.
+    if (React.__patchedBySandboxForFakeErrorBoundaries) {
+        return;
+    }
+    React.__patchedBySandboxForFakeErrorBoundaries = true;
+
+    const origCreateClass = React.createClass;
+    React.createClass = (structure) => {
+        const origRender = structure.render;
+
+        return origCreateClass({
+            ...structure,
+            render() {
+                try {
+                    return origRender.call(this);
+                } catch(e) {
+                    return <pre className={css(styles.errorBox)}>
+                        {e.stack}
+                    </pre>;
+                }
+            }
+        });
+    };
+
+    const styles = StyleSheet.create({
+        errorBox: {
+            background: 'red',
+            color: 'black',
+            whiteSpace: 'pre',
+            textAlign: 'left',
+        }
+    });
+};
+
 
 const Sandbox = React.createClass({
     propTypes: {
@@ -94,6 +133,8 @@ const Sandbox = React.createClass({
     componentWillMount() {
         const store = this.store = createSandboxStore();
         PropTypeTools.patch(RP);
+
+        patchReactWithFakeErrorBoundaries();
     },
 
     componentDidMount() {

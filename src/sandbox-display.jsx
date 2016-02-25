@@ -111,9 +111,11 @@ const SandboxDisplay = React.createClass({
                             :
                             "No fixtures for this component yet. Add some!"
                         }
-                        <button onClick={this.handleFixtureAdd}>
-                            Add new fixture
-                        </button>
+                        <div className={css(styles.addButtonContainer)}>
+                            <button onClick={this.handleFixtureAdd}>
+                                Add new fixture
+                            </button>
+                        </div>
                     </div>
                 }
             }
@@ -142,6 +144,9 @@ const styles = StyleSheet.create({
     root: {
         textAlign: 'center',
         padding: 20
+    },
+    addButtonContainer: {
+        borderTop: '1px dotted black',
     }
 });
 

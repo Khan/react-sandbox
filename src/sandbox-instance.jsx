@@ -10,28 +10,6 @@ const PureRenderMixinWithCursor = require("./pure-render-mixin-with-cursor.js");
 
 const RP = React.PropTypes;
 
-// TODO(jlfwong): Remove this once we upgrade to React v0.15.0 so we can use
-// Error boundaries, which this implements (poorly)
-const patchWithTryCatch = (Component) => {
-    if (!Component.__patchedWithTryCatchBySandbox) {
-        Component.__patchedWithTryCatchBySandbox = true;
-
-        const origRender = Component.prototype.render;
-
-        Component.prototype.render = function() {
-            try {
-                return origRender.call(this);
-            } catch(e) {
-                return <pre className={css(styles.errorBox)}>
-                    {e.stack}
-                </pre>;
-            }
-        };
-    }
-
-    return Component;
-};
-
 const getInvalidProps = (component, props) => {
     const propTypes = component.propTypes;
     const componentName = component.displayName;
@@ -97,7 +75,7 @@ const SandboxInstance = React.createClass({
 
         const propErrors = getInvalidProps(component, props);
 
-        const Component = patchWithTryCatch(component);
+        const Component = component;
 
         return <div className={css(styles.container)}>
             <div className={css(styles.propEditorWrapper)}>
@@ -124,15 +102,17 @@ const SandboxInstance = React.createClass({
 const styles = StyleSheet.create({
     container: {
         display: 'flex',
-        padding: '10px 0',
         borderTop: '1px dotted black',
     },
     propEditorWrapper: {
+        padding: '10px 10px 10px 0',
         width: 400,
         overflow: 'scroll',
         maxHeight: 800,
+        borderRight: '1px dotted black',
     },
     componentTableWrapper: {
+        padding: '10px 0',
         flexGrow: 1,
         overflow: 'auto',
         maxHeight: 800,
