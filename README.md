@@ -6,8 +6,6 @@ TODO(jlfwong): Write a real README!
 
 TODO:
     - Write real README
-    - PropType highlighting (and don't bother trying to render if props are 
-      invalid)
     - Generation of fixtures
     - Saving of fixtures
     - Importing of fixtures

@@ -60,22 +60,27 @@ const FIELD_RENDERERS = (() => {
             className={css(styles.stringInput)}
             type="text"
             value={value}
+            placeholder={value == null ? '(null)' : ''}
             onChange={(value) => onChange(cursor, value)}
         />;
     };
 
     const bool = ({value, cursor, onChange}) => {
-        return <input
-            type="checkbox"
-            checked={value}
-            onChange={(ev) => onChange(cursor, ev.target.checked)}
-        />;
+        return <div>
+            <input
+                type="checkbox"
+                checked={value}
+                onChange={(ev) => onChange(cursor, ev.target.checked)}
+            />
+            {JSON.stringify(value)}
+        </div>
     };
 
     const number = ({value, cursor, onChange}) => {
         return <input
             type="number"
             value={value}
+            placeholder={value == null ? '(null)' : ''}
             onChange={
                 (ev) => onChange(cursor, parseFloat(ev.target.value, 10))
             }
