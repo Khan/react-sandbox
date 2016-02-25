@@ -5,9 +5,6 @@ Play with your React components!
 TODO(jlfwong): Write a real README!
 
 TODO:
-    - Webpack builds
-        - webapp w/ react, redux, etc. external'd
-        - standalone dist w/ react external
     - Example version, pulling from npm cdn
     - Working require through npm
         - Move sandbox.js to index.js

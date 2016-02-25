@@ -2,10 +2,13 @@
   "name": "react-sandbox",
   "version": "0.0.1",
   "description": "A tool to experiment with React Components in your browser",
-  "main": "src/index.js",
+  "main": "lib/sandbox.jsx",
   "scripts": {
     "test": "mocha --compilers js:babel/register tests",
-    "prepublish": "babel -d lib/ src"
+    "prepublish": "babel -d lib/ src",
+    "build": "npm run build:dist && npm run build:dist:ka",
+    "build:dist": "webpack --config webpack.config.js",
+    "build:dist:ka": "webpack --config webpack.config.ka.js"
   },
   "repository": {
     "type": "git",

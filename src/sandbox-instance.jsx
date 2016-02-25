@@ -20,7 +20,8 @@ const getInvalidProps = (component, props) => {
         if (!propTypes.hasOwnProperty(propName)) {
             continue;
         }
-        error = propTypes[propName](props, propName, componentName, 'prop');
+        const error = propTypes[propName](props, propName,
+                                          componentName, 'prop');
         if (error instanceof Error) {
             errors.push(error);
         }
