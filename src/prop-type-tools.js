@@ -131,9 +131,12 @@ const _generateValue = (inferredType, path, config) => {
         }
     }
 
+    if (!required && Math.random() < config.nullProbability) {
+        return null;
+    }
+
     return generators[generatorType](
                         path,
-                        required,
                         (t, path) => _generateValue(t, path, config),
                         inferredType,
                         config);
@@ -150,51 +153,41 @@ const generateValueForType = (inferredType, path = [], config = {}) => {
     return _generateValue(inferredType, path, fullConfig);
 };
 
-const randomMaybe = (isRequired, value, config) => {
-    // If the prop is not required, return null 1/5 of the time.
-    if (!isRequired && Math.random() < config.nullProbability) {
-        return null;
-    }
-    return value;
-};
-
 // Generators all have the signature
 //
 //      (path, isRequired, generator, inferredType) => value
 //
 // Additional arguments are used in some to allow re-use by other generators.
-//
-// TODO(jlfwong): Move randomMaybe call into _generateValue...
 const generators = {
-    string(path, isRequired, generator, inferredType, config) {
-        return randomMaybe(isRequired, config.generateString(path), config);
+    string(path, generator, inferredType, config) {
+        return config.generateString(path);
     },
-    number(path, isRequired, generator, inferredType, config) {
-        return randomMaybe(isRequired, config.generateNumber(), config);
+    number(path, generator, inferredType, config) {
+        return config.generateNumber(path);
     },
-    bool(path, isRequired, generator, inferredType, config) {
-        return randomMaybe(isRequired, config.generateBool(), config);
+    bool(path, generator, inferredType, config) {
+        return config.generateBool(path);
     },
-    array(path, isRequired, generator, inferredType, config) {
-        return randomMaybe(isRequired, [], config);
+    array(path) {
+        return [];
     },
-    object(path, isRequired, generator, inferredType, config) {
-        return randomMaybe(isRequired, {}, config);
+    object(path) {
+        return {};
     },
-    arrayOf(path, isRequired, generator, inferredType, config) {
+    arrayOf(path, generator, inferredType, config) {
         const ret = [];
         const length = config.chooseListLength();
         for (let i = 0; i < length; i++) {
             ret.push(generator(inferredType.args[0], path.concat([i])));
         }
-        return randomMaybe(isRequired, ret, config);
+        return ret;
     },
-    objectOf(path, isRequired, generator, inferredType, config) {
+    objectOf(path, generator, inferredType, config) {
         // TODO(jlfwong): Maybe try to generate here? Not clear how frequently
         // this will be useful.
-        return randomMaybe(isRequired, {}, config);
+        return {};
     },
-    shape(path, isRequired, generator, inferredType, config) {
+    shape(path, generator, inferredType) {
         const ret = {};
         const shapeTypes = inferredType.args[0];
         for (const key in shapeTypes) {
@@ -203,9 +196,9 @@ const generators = {
             }
             ret[key] = generator(shapeTypes[key], path.concat([key]));
         }
-        return randomMaybe(isRequired, ret, config);
+        return ret;
     },
-    unknown(path, isRequired, generator, inferredType, config) {
+    unknown(path, generator, inferredType, config) {
         return null;
     },
     any(...args) {
@@ -217,19 +210,17 @@ const generators = {
     element(...args) {
         return generators.string(...args);
     },
-    oneOf(path, isRequired, generator, inferredType, config) {
-        return randomMaybe(isRequired,
-                           config.chooseItemFromList(inferredType.args[0]),
-                           config);
+    oneOf(path, generator, inferredType, config) {
+        return config.chooseItemFromList(inferredType.args[0]);
     },
-    oneOfType(path, isRequired, generator, inferredType, config) {
+    oneOfType(path, generator, inferredType, config) {
         const chosenType = config.chooseItemFromList(inferredType.args[0]);
-        return randomMaybe(isRequired, generator(chosenType, path), config);
+        return generator(chosenType, path);
     },
-    func(path, isRequired, generator, inferredType, config) {
-        return randomMaybe(isRequired, function(...args) {
-            return console.log(...args);
-        }, config);
+    func(path, generator, inferredType, config) {
+        return function() {
+            console.log(arguments);
+        }
     },
 };
 

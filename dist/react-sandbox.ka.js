@@ -436,7 +436,11 @@ module.exports =
 	        }
 	    }
 
-	    return generators[generatorType](path, required, function (t, path) {
+	    if (!required && Math.random() < config.nullProbability) {
+	        return null;
+	    }
+
+	    return generators[generatorType](path, function (t, path) {
 	        return _generateValue(t, path, config);
 	    }, inferredType, config);
 	};
@@ -454,51 +458,41 @@ module.exports =
 	    return _generateValue(inferredType, path, fullConfig);
 	};
 
-	var randomMaybe = function randomMaybe(isRequired, value, config) {
-	    // If the prop is not required, return null 1/5 of the time.
-	    if (!isRequired && Math.random() < config.nullProbability) {
-	        return null;
-	    }
-	    return value;
-	};
-
 	// Generators all have the signature
 	//
 	//      (path, isRequired, generator, inferredType) => value
 	//
 	// Additional arguments are used in some to allow re-use by other generators.
-	//
-	// TODO(jlfwong): Move randomMaybe call into _generateValue...
 	var generators = {
-	    string: function string(path, isRequired, generator, inferredType, config) {
-	        return randomMaybe(isRequired, config.generateString(path), config);
+	    string: function string(path, generator, inferredType, config) {
+	        return config.generateString(path);
 	    },
-	    number: function number(path, isRequired, generator, inferredType, config) {
-	        return randomMaybe(isRequired, config.generateNumber(), config);
+	    number: function number(path, generator, inferredType, config) {
+	        return config.generateNumber(path);
 	    },
-	    bool: function bool(path, isRequired, generator, inferredType, config) {
-	        return randomMaybe(isRequired, config.generateBool(), config);
+	    bool: function bool(path, generator, inferredType, config) {
+	        return config.generateBool(path);
 	    },
-	    array: function array(path, isRequired, generator, inferredType, config) {
-	        return randomMaybe(isRequired, [], config);
+	    array: function array(path) {
+	        return [];
 	    },
-	    object: function object(path, isRequired, generator, inferredType, config) {
-	        return randomMaybe(isRequired, {}, config);
+	    object: function object(path) {
+	        return {};
 	    },
-	    arrayOf: function arrayOf(path, isRequired, generator, inferredType, config) {
+	    arrayOf: function arrayOf(path, generator, inferredType, config) {
 	        var ret = [];
 	        var length = config.chooseListLength();
 	        for (var i = 0; i < length; i++) {
 	            ret.push(generator(inferredType.args[0], path.concat([i])));
 	        }
-	        return randomMaybe(isRequired, ret, config);
+	        return ret;
 	    },
-	    objectOf: function objectOf(path, isRequired, generator, inferredType, config) {
+	    objectOf: function objectOf(path, generator, inferredType, config) {
 	        // TODO(jlfwong): Maybe try to generate here? Not clear how frequently
 	        // this will be useful.
-	        return randomMaybe(isRequired, {}, config);
+	        return {};
 	    },
-	    shape: function shape(path, isRequired, generator, inferredType, config) {
+	    shape: function shape(path, generator, inferredType) {
 	        var ret = {};
 	        var shapeTypes = inferredType.args[0];
 	        for (var key in shapeTypes) {
@@ -507,9 +501,9 @@ module.exports =
 	            }
 	            ret[key] = generator(shapeTypes[key], path.concat([key]));
 	        }
-	        return randomMaybe(isRequired, ret, config);
+	        return ret;
 	    },
-	    unknown: function unknown(path, isRequired, generator, inferredType, config) {
+	    unknown: function unknown(path, generator, inferredType, config) {
 	        return null;
 	    },
 	    any: function any() {
@@ -521,17 +515,17 @@ module.exports =
 	    element: function element() {
 	        return generators.string.apply(generators, arguments);
 	    },
-	    oneOf: function oneOf(path, isRequired, generator, inferredType, config) {
-	        return randomMaybe(isRequired, config.chooseItemFromList(inferredType.args[0]), config);
+	    oneOf: function oneOf(path, generator, inferredType, config) {
+	        return config.chooseItemFromList(inferredType.args[0]);
 	    },
-	    oneOfType: function oneOfType(path, isRequired, generator, inferredType, config) {
+	    oneOfType: function oneOfType(path, generator, inferredType, config) {
 	        var chosenType = config.chooseItemFromList(inferredType.args[0]);
-	        return randomMaybe(isRequired, generator(chosenType, path), config);
+	        return generator(chosenType, path);
 	    },
-	    func: function func(path, isRequired, generator, inferredType, config) {
-	        return randomMaybe(isRequired, function () {
-	            return console.log.apply(console, arguments);
-	        }, config);
+	    func: function func(path, generator, inferredType, config) {
+	        return function () {
+	            console.log(arguments);
+	        };
 	    }
 	};
 
@@ -986,19 +980,21 @@ module.exports =
 	        var cursor = _props.cursor;
 	        var types = _props.types;
 
+	        var content = Object.keys(types).map(function (key) {
+	            return React.createElement(SinglePropEditor, {
+	                key: key,
+	                name: key,
+	                type: types[key],
+	                value: componentProps[key],
+	                onChange: onChange,
+	                cursor: cursor.concat([key])
+	            });
+	        });
+
 	        return React.createElement(
 	            "div",
 	            null,
-	            Object.keys(types).map(function (key) {
-	                return React.createElement(SinglePropEditor, {
-	                    key: key,
-	                    name: key,
-	                    type: types[key],
-	                    value: componentProps[key],
-	                    onChange: onChange,
-	                    cursor: cursor.concat([key])
-	                });
-	            })
+	            content.length > 0 ? content : "No propTypes declared!"
 	        );
 	    }
 	});

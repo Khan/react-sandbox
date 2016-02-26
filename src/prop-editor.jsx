@@ -40,17 +40,19 @@ const PropEditor = React.createClass({
             types,
         } = this.props;
 
+        let content = Object.keys(types).map(key => {
+            return <SinglePropEditor
+                key={key}
+                name={key}
+                type={types[key]}
+                value={componentProps[key]}
+                onChange={onChange}
+                cursor={cursor.concat([key])}
+            />;
+        });
+
         return <div>
-            {Object.keys(types).map(key => {
-                return <SinglePropEditor
-                    key={key}
-                    name={key}
-                    type={types[key]}
-                    value={componentProps[key]}
-                    onChange={onChange}
-                    cursor={cursor.concat([key])}
-                />;
-            })}
+            {content.length > 0 ? content : "No propTypes declared!"}
         </div>;
     },
 });
