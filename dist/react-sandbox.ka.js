@@ -523,9 +523,7 @@ module.exports =
 	        return generator(chosenType, path);
 	    },
 	    func: function func(path, generator, inferredType, config) {
-	        return function () {
-	            console.log(arguments);
-	        };
+	        return function () {};
 	    }
 	};
 
@@ -605,6 +603,7 @@ module.exports =
 	var css = _require.css;
 
 	var SandboxInstance = __webpack_require__(7);
+	var serializeToJS = __webpack_require__(28);
 
 	var RP = React.PropTypes;
 
@@ -620,14 +619,6 @@ module.exports =
 	        ret[key] = valueGenerator(types[key], [key]);
 	    }
 	    return ret;
-	};
-
-	var serializeFixtures = function serializeFixtures(fixtures) {
-	    try {
-	        return JSON.stringify(fixtures, null, 4);
-	    } catch (e) {
-	        return e.stack;
-	    }
 	};
 
 	var SandboxDisplay = React.createClass({
@@ -745,7 +736,7 @@ module.exports =
 	                            React.createElement("textarea", {
 	                                className: css(styles.textarea),
 	                                readOnly: true,
-	                                value: serializeFixtures(fixtures)
+	                                value: serializeToJS(fixtures)
 	                            })
 	                        );
 	                    }
@@ -1047,6 +1038,8 @@ module.exports =
 	var valueSatisfiesType = _require2.valueSatisfiesType;
 	var generateRandomValueForType = _require2.generateRandomValueForType;
 
+	var serializeToJS = __webpack_require__(28);
+
 	var RP = React.PropTypes;
 
 	var debounce = function debounce(fn, wait) {
@@ -1064,6 +1057,16 @@ module.exports =
 	        clearTimeout(timeout);
 	        timeout = setTimeout(later, wait);
 	    };
+	};
+
+	var promptForNewJSVal = function promptForNewJSVal(value, onChange, cursor) {
+	    var promptVal = prompt('Set JS value', serializeToJS(value));
+
+	    if (promptVal != null) {
+	        // Wrap eval in parens to force functions to be functions expressions
+	        // instead of function definitions.
+	        onChange(cursor, eval("(" + promptVal + ")"));
+	    }
 	};
 
 	var DebouncedInput = React.createClass({
@@ -1277,27 +1280,50 @@ module.exports =
 	        );
 	    };
 
-	    var unknown = function unknown(_ref7) {
+	    var wrapWithUpdater = function wrapWithUpdater(content, _ref7) {
 	        var value = _ref7.value;
 	        var onChange = _ref7.onChange;
+	        var cursor = _ref7.cursor;
 
-	        try {
-	            return JSON.stringify(value);
-	        } catch (e) {
-	            return value.toString();
-	        }
+	        return React.createElement(
+	            "span",
+	            {
+	                onClick: function () {
+	                    return promptForNewJSVal(value, onChange, cursor);
+	                }
+	            },
+	            content
+	        );
 	    };
 
-	    var instanceOf = function instanceOf(_ref8) {
+	    var unknown = function unknown(_ref8) {
 	        var value = _ref8.value;
+	        var onChange = _ref8.onChange;
+	        var cursor = _ref8.cursor;
 
-	        return value == null ? '(null)' : value.toString();
+	        var content = '';
+	        try {
+	            content = JSON.stringify(value);
+	        } catch (e) {
+	            content = value.toString();
+	        }
+
+	        return wrapWithUpdater(content, { value: value, onChange: onChange, cursor: cursor });
 	    };
 
-	    var func = function func(_ref9) {
+	    var instanceOf = function instanceOf(_ref9) {
 	        var value = _ref9.value;
 
 	        return value == null ? '(null)' : value.toString();
+	    };
+
+	    var func = function func(_ref10) {
+	        var value = _ref10.value;
+	        var onChange = _ref10.onChange;
+	        var cursor = _ref10.cursor;
+
+	        var content = value == null ? '(null)' : value.toString();
+	        return wrapWithUpdater(content, { value: value, onChange: onChange, cursor: cursor });
 	    };
 
 	    var nullable = function nullable(inputType, props) {
@@ -1378,12 +1404,21 @@ module.exports =
 	        };
 	    },
 
-	    render: function render() {
+	    handleLabelClick: function handleLabelClick() {
 	        var _props = this.props;
-	        var name = _props.name;
 	        var value = _props.value;
-	        var type = _props.type;
-	        var ancestorValid = _props.ancestorValid;
+	        var cursor = _props.cursor;
+	        var onChange = _props.onChange;
+
+	        promptForNewJSVal(value, onChange, cursor);
+	    },
+
+	    render: function render() {
+	        var _props2 = this.props;
+	        var name = _props2.name;
+	        var value = _props2.value;
+	        var type = _props2.type;
+	        var ancestorValid = _props2.ancestorValid;
 
 	        // TODO(jlfwong): Adding to objectOf
 	        // TODO(jlfwong): Drag to re-arrange in arrays
@@ -1407,7 +1442,10 @@ module.exports =
 	            },
 	            React.createElement(
 	                "span",
-	                { className: css(styles.nameLabel) },
+	                {
+	                    className: css(styles.nameLabel),
+	                    onClick: this.handleLabelClick
+	                },
 	                name
 	            ),
 	            fieldEditor
@@ -2620,6 +2658,183 @@ module.exports =
 /***/ function(module, exports) {
 
 	module.exports = require("icepick");
+
+/***/ },
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isPlainObject = __webpack_require__(29);
+
+	// TODO(jlfwong): Tests
+	var serializeToJS = function serializeToJS(val) {
+	    var indent = function indent(x) {
+	        return x.replace(/^/gm, '    ');
+	    };
+
+	    if (typeof val === 'undefined') {
+	        return 'undefined';
+	    }
+	    if (val == null) {
+	        return 'null';
+	    }
+	    if (Array.isArray(val)) {
+	        var children = val.map(serializeToJS);
+	        if (children.length === 0) {
+	            return '[]';
+	        }
+	        return '[\n' + indent(children.join(',\n')) + '\n]';
+	    }
+	    if (typeof val === 'object') {
+	        if (!isPlainObject(val)) {
+	            return '<<custom object>>';
+	        }
+
+	        var childKeys = Object.keys(val).filter(function (k) {
+	            return typeof val[k] !== 'undefined';
+	        });
+	        if (childKeys.length === 0) {
+	            return '{}';
+	        }
+	        return '{\n' + indent(childKeys.map(function (k) {
+	            // TODO(jlfwong): Escape key? Mehhh
+	            return '"' + k + '": ' + serializeToJS(val[k]);
+	        }).join(',\n')) + '\n}';
+	    }
+	    if (typeof val === 'function') {
+	        return val.toString();
+	    }
+	    // Fallback to JSON serialization. This covers primitives like numbers,
+	    // string, and booleans
+	    return JSON.stringify(val);
+	};
+
+	module.exports = serializeToJS;
+
+/***/ },
+/* 29 */
+/***/ function(module, exports) {
+
+	/**
+	 * lodash 4.0.3 (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modularize exports="npm" -o ./`
+	 * Copyright 2012-2016 The Dojo Foundation <http://dojofoundation.org/>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright 2009-2016 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 * Available under MIT license <https://lodash.com/license>
+	 */
+
+	/** `Object#toString` result references. */
+	var objectTag = '[object Object]';
+
+	/**
+	 * Checks if `value` is a host object in IE < 9.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+	 */
+	function isHostObject(value) {
+	  // Many host objects are `Object` objects that can coerce to strings
+	  // despite having improperly defined `toString` methods.
+	  var result = false;
+	  if (value != null && typeof value.toString != 'function') {
+	    try {
+	      result = !!(value + '');
+	    } catch (e) {}
+	  }
+	  return result;
+	}
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = Function.prototype.toString;
+
+	/** Used to infer the `Object` constructor. */
+	var objectCtorString = funcToString.call(Object);
+
+	/**
+	 * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var objectToString = objectProto.toString;
+
+	/** Built-in value references. */
+	var getPrototypeOf = Object.getPrototypeOf;
+
+	/**
+	 * Checks if `value` is object-like. A value is object-like if it's not `null`
+	 * and has a `typeof` result of "object".
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 * @example
+	 *
+	 * _.isObjectLike({});
+	 * // => true
+	 *
+	 * _.isObjectLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObjectLike(_.noop);
+	 * // => false
+	 *
+	 * _.isObjectLike(null);
+	 * // => false
+	 */
+	function isObjectLike(value) {
+	  return !!value && typeof value == 'object';
+	}
+
+	/**
+	 * Checks if `value` is a plain object, that is, an object created by the
+	 * `Object` constructor or one with a `[[Prototype]]` of `null`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+	 * @example
+	 *
+	 * function Foo() {
+	 *   this.a = 1;
+	 * }
+	 *
+	 * _.isPlainObject(new Foo);
+	 * // => false
+	 *
+	 * _.isPlainObject([1, 2, 3]);
+	 * // => false
+	 *
+	 * _.isPlainObject({ 'x': 0, 'y': 0 });
+	 * // => true
+	 *
+	 * _.isPlainObject(Object.create(null));
+	 * // => true
+	 */
+	function isPlainObject(value) {
+	  if (!isObjectLike(value) ||
+	      objectToString.call(value) != objectTag || isHostObject(value)) {
+	    return false;
+	  }
+	  var proto = getPrototypeOf(value);
+	  if (proto === null) {
+	    return true;
+	  }
+	  var Ctor = proto.constructor;
+	  return (typeof Ctor == 'function' &&
+	    Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString);
+	}
+
+	module.exports = isPlainObject;
+
 
 /***/ }
 /******/ ]);

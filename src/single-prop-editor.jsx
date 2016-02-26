@@ -12,6 +12,7 @@ const {
     valueSatisfiesType,
     generateRandomValueForType,
 } = require("./prop-type-tools.js");
+const serializeToJS = require("./serialize-to-js.js");
 
 const RP = React.PropTypes;
 
@@ -24,6 +25,16 @@ const debounce = (fn, wait) => {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+};
+
+const promptForNewJSVal = (value, onChange, cursor) => {
+    const promptVal = prompt('Set JS value', serializeToJS(value))
+
+    if (promptVal != null) {
+        // Wrap eval in parens to force functions to be functions expressions
+        // instead of function definitions.
+        onChange(cursor, eval(`(${promptVal})`));
+    }
 };
 
 const DebouncedInput = React.createClass({
@@ -180,20 +191,32 @@ const FIELD_RENDERERS = (() => {
         </div>;
     };
 
-    const unknown = ({value, onChange}) => {
+    const wrapWithUpdater = (content, {value, onChange, cursor}) => {
+        return <span
+            onClick={() => promptForNewJSVal(value, onChange, cursor)}
+        >
+            {content}
+        </span>;
+    };
+
+    const unknown = ({value, onChange, cursor}) => {
+        let content = '';
         try {
-            return JSON.stringify(value);
+            content = JSON.stringify(value);
         } catch (e) {
-            return value.toString();
+            content = value.toString();
         }
+
+        return wrapWithUpdater(content, {value, onChange, cursor});
     };
 
     const instanceOf = ({value}) => {
         return value == null ? '(null)' : value.toString();
     };
 
-    const func = ({value}) => {
-        return value == null ? '(null)' : value.toString();
+    const func = ({value, onChange, cursor}) => {
+        const content = value == null ? '(null)' : value.toString();
+        return wrapWithUpdater(content, {value, onChange, cursor});
     };
 
     const nullable = (inputType, props) => {
@@ -269,6 +292,11 @@ const SinglePropEditor = React.createClass({
         };
     },
 
+    handleLabelClick() {
+        const {value, cursor, onChange} = this.props;
+        promptForNewJSVal(value, onChange, cursor);
+    },
+
     render() {
         const {name, value, type, ancestorValid} = this.props;
 
@@ -294,7 +322,10 @@ const SinglePropEditor = React.createClass({
         return <div className={css(styles.singleField,
                                    (!valid) && styles.invalidField)}
         >
-            <span className={css(styles.nameLabel)}>
+            <span
+                className={css(styles.nameLabel)}
+                onClick={this.handleLabelClick}
+            >
                 {name}
             </span>
             {fieldEditor}

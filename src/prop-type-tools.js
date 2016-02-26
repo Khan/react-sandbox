@@ -218,9 +218,7 @@ const generators = {
         return generator(chosenType, path);
     },
     func(path, generator, inferredType, config) {
-        return function() {
-            console.log(arguments);
-        }
+        return function() {};
     },
 };
 

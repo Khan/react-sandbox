@@ -6,6 +6,7 @@ const React = require("react");
 const { StyleSheet, css } = require("aphrodite");
 
 const SandboxInstance = require("./sandbox-instance.jsx");
+const serializeToJS = require("./serialize-to-js.js");
 
 const RP = React.PropTypes;
 
@@ -21,14 +22,6 @@ const generateProps = (types, valueGenerator) => {
         ret[key] = valueGenerator(types[key], [key]);
     }
     return ret;
-};
-
-const serializeFixtures = (fixtures) => {
-    try {
-        return JSON.stringify(fixtures, null, 4);
-    } catch (e) {
-        return e.stack;
-    }
 };
 
 const SandboxDisplay = React.createClass({
@@ -129,7 +122,7 @@ const SandboxDisplay = React.createClass({
                         <textarea
                             className={css(styles.textarea)}
                             readOnly={true}
-                            value={serializeFixtures(fixtures)}
+                            value={serializeToJS(fixtures)}
                         />
                     </div>;
                 }
