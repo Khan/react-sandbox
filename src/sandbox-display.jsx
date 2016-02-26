@@ -23,6 +23,14 @@ const generateProps = (types, valueGenerator) => {
     return ret;
 };
 
+const serializeFixtures = (fixtures) => {
+    try {
+        return JSON.stringify(fixtures, null, 4);
+    } catch (e) {
+        return e.stack;
+    }
+};
+
 const SandboxDisplay = React.createClass({
     propTypes: {
         // A list of [label, key] pairs, one per component loadable in the
@@ -118,6 +126,11 @@ const SandboxDisplay = React.createClass({
                                 Add new fixture
                             </button>
                         </div>
+                        <textarea
+                            className={css(styles.textarea)}
+                            readOnly={true}
+                            value={serializeFixtures(fixtures)}
+                        />
                     </div>;
                 }
             }
@@ -149,6 +162,11 @@ const styles = StyleSheet.create({
     },
     addButtonContainer: {
         borderTop: '1px dotted black',
+    },
+    textarea: {
+        display: 'block',
+        width: '100%',
+        height: 300,
     },
 });
 

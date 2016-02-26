@@ -622,6 +622,14 @@ module.exports =
 	    return ret;
 	};
 
+	var serializeFixtures = function serializeFixtures(fixtures) {
+	    try {
+	        return JSON.stringify(fixtures, null, 4);
+	    } catch (e) {
+	        return e.stack;
+	    }
+	};
+
 	var SandboxDisplay = React.createClass({
 	    displayName: "SandboxDisplay",
 
@@ -733,7 +741,12 @@ module.exports =
 	                                    { onClick: _this.handleFixtureAdd },
 	                                    "Add new fixture"
 	                                )
-	                            )
+	                            ),
+	                            React.createElement("textarea", {
+	                                className: css(styles.textarea),
+	                                readOnly: true,
+	                                value: serializeFixtures(fixtures)
+	                            })
 	                        );
 	                    }
 	                })();
@@ -780,6 +793,11 @@ module.exports =
 	    },
 	    addButtonContainer: {
 	        borderTop: '1px dotted black'
+	    },
+	    textarea: {
+	        display: 'block',
+	        width: '100%',
+	        height: 300
 	    }
 	});
 
@@ -1721,7 +1739,11 @@ module.exports =
 
 	            return _extends({}, state, {
 	                fixtures: _extends({}, state.fixtures, {
-	                    instances: icepick.assocIn(state.fixtures.instances, cursor, newValue)
+	                    instances: icepick.assocIn(state.fixtures.instances, cursor,
+	                    // If the value is null, we'll
+	                    // set undefined to remove the
+	                    // field altogether
+	                    newValue == null ? undefined : newValue)
 	                })
 	            });
 

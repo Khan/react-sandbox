@@ -65,7 +65,12 @@ const selectedComponent = (state = null, action) => {
                     ...state.fixtures,
                     instances: icepick.assocIn(state.fixtures.instances,
                                                cursor,
-                                               newValue),
+                                               // If the value is null, we'll
+                                               // set undefined to remove the
+                                               // field altogether
+                                               newValue == null ?
+                                                    undefined :
+                                                    newValue),
                 },
             };
 
