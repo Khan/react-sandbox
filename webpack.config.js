@@ -8,10 +8,12 @@ module.exports = {
     output: {
         path: path.join(__dirname, 'dist'),
         filename: 'react-sandbox.js',
+        library: 'ReactSandbox',
         libraryTarget: 'umd',
     },
     externals: {
         'react': 'React',
+        'react-dom': 'ReactDOM',
     },
     module: {
         loaders: [{

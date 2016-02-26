@@ -10,7 +10,8 @@ TODO:
         - Move sandbox.js to index.js
     - Autocomplete for searching through components
     - Edit unknown props as JSON
-    - Copy as JSON/JSON
+    - Copy fixtures as JSON/JS
+    - Codegen for the component
     - Deleting fixtures
     - Refactor prop generation
     - Write real README

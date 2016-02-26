@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack-dev-server --content-base ../../ --port 4113"
+  },
+  "dependencies": {
+    "material-ui": "^0.14.4",
+    "react": "^0.14.7",
+    "react-dom": "^0.14.7",
+    "react-tap-event-plugin": "^0.2.2"
+  },
+  "devDependencies": {
+    "webpack-dev-server": "^1.14.1"
+  }
+}

@@ -6,9 +6,10 @@
   "scripts": {
     "test": "mocha --compilers js:babel/register tests",
     "prepublish": "babel -d lib/ src",
-    "build": "npm run build:dist && npm run build:dist:ka",
-    "build:dist": "webpack --config webpack.config.js",
-    "build:dist:ka": "webpack --config webpack.config.ka.js"
+    "build:dist": "npm run build:dist:umd && npm run build:dist:ka",
+    "build:dist:umd": "webpack --config webpack.config.js",
+    "build:dist:ka": "webpack --config webpack.config.ka.js",
+    "build:examples": "cd examples/material-ui && npm install && npm build"
   },
   "repository": {
     "type": "git",

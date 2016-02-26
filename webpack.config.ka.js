@@ -12,6 +12,7 @@ module.exports = {
     },
     externals: {
         'react': 'react',
+        'react-dom': 'react-dom',
         'icepick': 'icepick',
         'react-redux': 'react-redux',
         'redux-thunk': 'redux-thunk',
