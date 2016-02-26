@@ -110,23 +110,35 @@ const valueSatisfiesType = (value, inferredType) => {
     return !(maybeError instanceof Error);
 };
 
+const configDefaults = {
+    generateString: () => '',
+    generateNumber: () => 0,
+    generateBool: () => false,
+    chooseItemFromList: (list) => list && list[0],
+    chooseListLength: () => 1,
+    nullProbability: 1.0,
+};
+
 const _generateValue = (inferredType, path, config) => {
-    let generatorType = 'string';
+    let generatorType = 'unknown';
     let required = true;
 
     if (inferredType && inferredType.type) {
         required = !!inferredType.required;
 
-        if (config.hasOwnProperty(inferredType.type)) {
+        if (generators.hasOwnProperty(inferredType.type)) {
             generatorType = inferredType.type;
         }
     }
 
-    return config[generatorType](path,
-                                 required,
-                                 (t, path) => _generateValue(t, path, config),
-                                 inferredType);
+    return generators[generatorType](
+                        path,
+                        required,
+                        (t, path) => _generateValue(t, path, config),
+                        inferredType,
+                        config);
 };
+
 
 /**
  * Given an inferred type and an optional configuration object, return a value
@@ -134,8 +146,16 @@ const _generateValue = (inferredType, path, config) => {
  */
 const generateValueForType = (inferredType, path = [], config = {}) => {
     const fullConfig = {};
-    Object.assign(fullConfig, generateValueForType.staticDefaults, config);
+    Object.assign(fullConfig, configDefaults, config);
     return _generateValue(inferredType, path, fullConfig);
+};
+
+const randomMaybe = (isRequired, value, config) => {
+    // If the prop is not required, return null 1/5 of the time.
+    if (!isRequired && Math.random() < config.nullProbability) {
+        return null;
+    }
+    return value;
 };
 
 // Generators all have the signature
@@ -143,68 +163,38 @@ const generateValueForType = (inferredType, path = [], config = {}) => {
 //      (path, isRequired, generator, inferredType) => value
 //
 // Additional arguments are used in some to allow re-use by other generators.
-generateValueForType.staticDefaults = {
-    string(path, isRequired) {
-        return isRequired ? '' : null;
+//
+// TODO(jlfwong): Move randomMaybe call into _generateValue...
+const generators = {
+    string(path, isRequired, generator, inferredType, config) {
+        return randomMaybe(isRequired, config.generateString(path), config);
     },
-    number(path, isRequired) {
-        return isRequired ? 0 : null;
+    number(path, isRequired, generator, inferredType, config) {
+        return randomMaybe(isRequired, config.generateNumber(), config);
     },
-    bool(path, isRequired) {
-        return isRequired ? false : null;
+    bool(path, isRequired, generator, inferredType, config) {
+        return randomMaybe(isRequired, config.generateBool(), config);
     },
-    array(path, isRequired, generator, inferredType,
-          length = 1, childType = null) {
-        if (!isRequired) {
-            return null;
-        }
+    array(path, isRequired, generator, inferredType, config) {
+        return randomMaybe(isRequired, [], config);
+    },
+    object(path, isRequired, generator, inferredType, config) {
+        return randomMaybe(isRequired, {}, config);
+    },
+    arrayOf(path, isRequired, generator, inferredType, config) {
         const ret = [];
+        const length = config.chooseListLength();
         for (let i = 0; i < length; i++) {
-            ret.push(generator(childType, path.concat([i])));
+            ret.push(generator(inferredType.args[0], path.concat([i])));
         }
-        return ret;
+        return randomMaybe(isRequired, ret, config);
     },
-    object(path, isRequired, generator, inferredType,
-           length = 1, childType = null, keyGenerator = () => 'key') {
-        if (!isRequired) {
-            return null;
-        }
-        const ret = {};
-        for (let i = 0; i < length; i++) {
-            const keyPrefix = keyGenerator();
-            let key = keyPrefix;
-            for (let j = 2; ret.hasOwnProperty(key); j++) {
-                key = `${keyPrefix}_${j}`;
-            }
-            ret[keyGenerator(path)] = generator(childType, path.concat([key]));
-        }
-        return ret;
+    objectOf(path, isRequired, generator, inferredType, config) {
+        // TODO(jlfwong): Maybe try to generate here? Not clear how frequently
+        // this will be useful.
+        return randomMaybe(isRequired, {}, config);
     },
-    arrayOf(path, isRequired, generator, inferredType,
-            length) {
-        return generateValueForType.staticDefaults
-                    .array(path,
-                           isRequired,
-                           generator,
-                           inferredType,
-                           length,
-                           inferredType.args[0]);
-    },
-    objectOf(path, isRequired, generator, inferredType,
-             length, keyGenerator) {
-        return generateValueForType.staticDefaults
-                    .object(path,
-                            isRequired,
-                            generator,
-                            inferredType,
-                            length,
-                            inferredType.args[0],
-                            keyGenerator);
-    },
-    shape(path, isRequired, generator, inferredType) {
-        if (!isRequired) {
-            return null;
-        }
+    shape(path, isRequired, generator, inferredType, config) {
         const ret = {};
         const shapeTypes = inferredType.args[0];
         for (const key in shapeTypes) {
@@ -213,108 +203,78 @@ generateValueForType.staticDefaults = {
             }
             ret[key] = generator(shapeTypes[key], path.concat([key]));
         }
-        return ret;
+        return randomMaybe(isRequired, ret, config);
     },
-};
-
-const randomMaybe = (isRequired, value) => {
-    // If the prop is not required, return null 1/5 of the time.
-    if (!isRequired && Math.random() < 0.2) {
+    unknown(path, isRequired, generator, inferredType, config) {
         return null;
-    }
-    return value;
+    },
+    any(...args) {
+        return generators.string(...args);
+    },
+    node(...args) {
+        return generators.string(...args);
+    },
+    element(...args) {
+        return generators.string(...args);
+    },
+    oneOf(path, isRequired, generator, inferredType, config) {
+        return randomMaybe(isRequired,
+                           config.chooseItemFromList(inferredType.args[0]),
+                           config);
+    },
+    oneOfType(path, isRequired, generator, inferredType, config) {
+        const chosenType = config.chooseItemFromList(inferredType.args[0]);
+        return randomMaybe(isRequired, generator(chosenType, path), config);
+    },
+    func(path, isRequired, generator, inferredType, config) {
+        return randomMaybe(isRequired, function(...args) {
+            return console.log(...args);
+        }, config);
+    },
 };
 
 const randomChoice = list => list[Math.floor(Math.random() * list.length)];
 
-// TODO(jlfwong): This is a little crazy -- it might be better to only allow
-// overriding of null probability, strings, numbers, booleans, and lengths of
-// things.
-//
-// This also might be less crazy if I switch to object args instead of
-// positional.
-generateValueForType.randomDefaults = {
-    string(path, isRequired) {
-        return randomMaybe(isRequired, [
+const randomConfig = {
+    generateString: (path) => {
+        if (path.length > 0) {
+            const name = ('' + path[path.length-1]).toLowerCase();
+            if (name.indexOf('color') !== -1) {
+                return randomChoice([
+                    'red',
+                    'green',
+                    'blue'
+                ]);
+            } else if (name.indexOf('url') !== -1) {
+                return randomChoice([
+                    'http://lorempixel.com/800/500/city/',
+                    'http://lorempixel.com/800/500/cats/',
+                    'http://lorempixel.com/800/500/nature/',
+                ]);
+            } else if (name.indexOf('href') !== -1) {
+                return randomChoice([
+                    'https://www.khanacademy.org',
+                    'https://google.com',
+                ]);
+            }
+        }
+        return [
             randomChoice(ADJECTIVES_1),
             randomChoice(ADJECTIVES_2),
             randomChoice(ANIMALS),
-        ].join(' '));
+        ].join(' ')
     },
-    number(path, isRequired) {
-        return randomMaybe(isRequired, Math.floor(Math.random() * 9));
-    },
-    bool(path, isRequired) {
-        return randomMaybe(isRequired, Math.random() > 0.5);
-    },
-    array(path, isRequired, generator, inferredType,
-          length = 1, childType = null) {
-        return randomMaybe(isRequired,
-                           generateValueForType.staticDefaults
-                                .array(path,
-                                       true,
-                                       generator,
-                                       inferredType,
-                                       Math.floor(Math.random() * 9),
-                                       childType));
-    },
-    object(path, isRequired, generator, inferredType,
-           length = 1, childType = null, keyGenerator = () => 'key') {
-        return randomMaybe(isRequired,
-                           generateValueForType.staticDefaults
-                                .object(path,
-                                        true,
-                                        generator,
-                                        inferredType,
-                                        Math.floor(Math.random() * 9),
-                                        childType,
-                                        keyGenerator));
-    },
-    arrayOf(path, isRequired, generator, inferredType,
-            length) {
-        return generateValueForType.randomDefaults
-                    .array(path,
-                           isRequired,
-                           generator,
-                           inferredType,
-                           length,
-                           inferredType.args[0]);
-    },
-    objectOf(path, isRequired, generator, inferredType,
-             length, keyGenerator) {
-        return generateValueForType.randomDefaults
-                    .object(path,
-                            isRequired,
-                            generator,
-                            inferredType,
-                            length,
-                            inferredType.args[0],
-                            keyGenerator);
-    },
-    shape(path, isRequired, ...args) {
-        return randomMaybe(isRequired,
-                           generateValueForType.staticDefaults
-                                .shape(path,
-                                       true,
-                                       ...args));
-    },
-    oneOf(path, isRequired, generator, inferredType) {
-        return randomMaybe(isRequired, randomChoice(inferredType.args[0]));
-    },
-    func(path, isRequired, generator, inferredType) {
-        return randomMaybe(isRequired, () => {});
-    },
+    generateNumber: () => Math.floor(Math.random() * 50 + 20),
+    generateBool: () => Math.random() < 0.5,
+    chooseItemFromList: (list) => randomChoice(list),
+    chooseListLength: () => Math.floor(Math.random() * 4) + 2,
+    nullProbability: 0.0,
 };
 
 // TODO(jlfwong): Reorganize this to avoid the Object.assign
 // call on every value generation.
-const generateRandomValueForType = (inferredType, path = [], config = {}) => {
-    const fullConfig = {};
-    Object.assign(fullConfig,
-                  generateValueForType.staticDefaults,
-                  generateValueForType.randomDefaults,
-                  config);
-    return _generateValue(inferredType, path, fullConfig);
+const generateRandomValueForType = (inferredType, path = []) => {
+    return generateValueForType(inferredType, path, randomConfig);
 };
 
 const ADJECTIVES_1 = [

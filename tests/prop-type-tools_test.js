@@ -298,12 +298,12 @@ describe("generateValueForType", () => {
 
     it('can generate arrays', () => {
         assertGenerated(RP.array, null);
-        assertGenerated(RP.array.isRequired, ['']);
+        assertGenerated(RP.array.isRequired, []);
     });
 
     it('can generate objects', () => {
         assertGenerated(RP.object, null);
-        assertGenerated(RP.object.isRequired, {'key': ''});
+        assertGenerated(RP.object.isRequired, {});
     });
 
     it('can generate arrays of numbers', () => {
@@ -315,13 +315,29 @@ describe("generateValueForType", () => {
     it('can generate objects of numbers', () => {
         assertGenerated(RP.objectOf(RP.number.isRequired), null);
         assertGenerated(RP.objectOf(RP.number.isRequired).isRequired,
-                        {key: 0});
+                        {});
     });
 
     it('can generate objects of numbers', () => {
         assertGenerated(RP.objectOf(RP.number.isRequired), null);
         assertGenerated(RP.objectOf(RP.number.isRequired).isRequired,
-                        {key: 0});
+                        {});
+    });
+
+    it('can generate for oneOf', () => {
+        assertGenerated(RP.oneOf([3, 7]), null);
+        assertGenerated(RP.oneOf([3, 7]).isRequired, 3);
+    });
+
+    it('can generate for func', () => {
+        assertGenerated(RP.func, null);
+        assert.isFunction(generateValueForType(inferType(RP.func.isRequired),
+                          [], {}));
+    });
+
+    it('can generate for oneOfType', () => {
+        assertGenerated(RP.oneOfType([RP.number.isRequired]), null);
+        assertGenerated(RP.oneOfType([RP.number.isRequired]).isRequired, 0);
     });
 
     it('can generate shapes', () => {
@@ -337,25 +353,7 @@ describe("generateValueForType", () => {
     });
 
     it('defaults to returning a string for custom propTypes', () => {
-        assertGenerated(() => {}, '');
-    });
-
-    it('can override generators', () => {
-        assertGeneratedWithConfig(RP.string.isRequired, {
-            string: () => 'hello',
-        }, 'hello');
-    });
-
-    it('can override generators and use names', () => {
-        assertGeneratedWithConfig(RP.shape({
-            a: RP.string.isRequired,
-            b: RP.string.isRequired,
-        }).isRequired, {
-            string: (path) => path[path.length - 1],
-        }, {
-            a: 'a',
-            b: 'b',
-        });
+        assertGenerated(() => {}, null);
     });
 });
 

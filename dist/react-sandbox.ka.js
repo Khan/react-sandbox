@@ -405,21 +405,40 @@ module.exports =
 	    return !(maybeError instanceof Error);
 	};
 
+	var configDefaults = {
+	    generateString: function generateString() {
+	        return '';
+	    },
+	    generateNumber: function generateNumber() {
+	        return 0;
+	    },
+	    generateBool: function generateBool() {
+	        return false;
+	    },
+	    chooseItemFromList: function chooseItemFromList(list) {
+	        return list && list[0];
+	    },
+	    chooseListLength: function chooseListLength() {
+	        return 1;
+	    },
+	    nullProbability: 1.0
+	};
+
 	var _generateValue = function _generateValue(inferredType, path, config) {
-	    var generatorType = 'string';
+	    var generatorType = 'unknown';
 	    var required = true;
 
 	    if (inferredType && inferredType.type) {
 	        required = !!inferredType.required;
 
-	        if (config.hasOwnProperty(inferredType.type)) {
+	        if (generators.hasOwnProperty(inferredType.type)) {
 	            generatorType = inferredType.type;
 	        }
 	    }
 
-	    return config[generatorType](path, required, function (t, path) {
+	    return generators[generatorType](path, required, function (t, path) {
 	        return _generateValue(t, path, config);
-	    }, inferredType);
+	    }, inferredType, config);
 	};
 
 	/**
@@ -431,8 +450,16 @@ module.exports =
 	    var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 	    var fullConfig = {};
-	    Object.assign(fullConfig, generateValueForType.staticDefaults, config);
+	    Object.assign(fullConfig, configDefaults, config);
 	    return _generateValue(inferredType, path, fullConfig);
+	};
+
+	var randomMaybe = function randomMaybe(isRequired, value, config) {
+	    // If the prop is not required, return null 1/5 of the time.
+	    if (!isRequired && Math.random() < config.nullProbability) {
+	        return null;
+	    }
+	    return value;
 	};
 
 	// Generators all have the signature
@@ -440,60 +467,38 @@ module.exports =
 	//      (path, isRequired, generator, inferredType) => value
 	//
 	// Additional arguments are used in some to allow re-use by other generators.
-	generateValueForType.staticDefaults = {
-	    string: function string(path, isRequired) {
-	        return isRequired ? '' : null;
+	//
+	// TODO(jlfwong): Move randomMaybe call into _generateValue...
+	var generators = {
+	    string: function string(path, isRequired, generator, inferredType, config) {
+	        return randomMaybe(isRequired, config.generateString(path), config);
 	    },
-	    number: function number(path, isRequired) {
-	        return isRequired ? 0 : null;
+	    number: function number(path, isRequired, generator, inferredType, config) {
+	        return randomMaybe(isRequired, config.generateNumber(), config);
 	    },
-	    bool: function bool(path, isRequired) {
-	        return isRequired ? false : null;
+	    bool: function bool(path, isRequired, generator, inferredType, config) {
+	        return randomMaybe(isRequired, config.generateBool(), config);
 	    },
-	    array: function array(path, isRequired, generator, inferredType) {
-	        var length = arguments.length <= 4 || arguments[4] === undefined ? 1 : arguments[4];
-	        var childType = arguments.length <= 5 || arguments[5] === undefined ? null : arguments[5];
-
-	        if (!isRequired) {
-	            return null;
-	        }
+	    array: function array(path, isRequired, generator, inferredType, config) {
+	        return randomMaybe(isRequired, [], config);
+	    },
+	    object: function object(path, isRequired, generator, inferredType, config) {
+	        return randomMaybe(isRequired, {}, config);
+	    },
+	    arrayOf: function arrayOf(path, isRequired, generator, inferredType, config) {
 	        var ret = [];
+	        var length = config.chooseListLength();
 	        for (var i = 0; i < length; i++) {
-	            ret.push(generator(childType, path.concat([i])));
+	            ret.push(generator(inferredType.args[0], path.concat([i])));
 	        }
-	        return ret;
+	        return randomMaybe(isRequired, ret, config);
 	    },
-	    object: function object(path, isRequired, generator, inferredType) {
-	        var length = arguments.length <= 4 || arguments[4] === undefined ? 1 : arguments[4];
-	        var childType = arguments.length <= 5 || arguments[5] === undefined ? null : arguments[5];
-	        var keyGenerator = arguments.length <= 6 || arguments[6] === undefined ? function () {
-	            return 'key';
-	        } : arguments[6];
-
-	        if (!isRequired) {
-	            return null;
-	        }
-	        var ret = {};
-	        for (var i = 0; i < length; i++) {
-	            var keyPrefix = keyGenerator();
-	            var key = keyPrefix;
-	            for (var j = 2; ret.hasOwnProperty(key); j++) {
-	                key = keyPrefix + '_' + j;
-	            }
-	            ret[keyGenerator(path)] = generator(childType, path.concat([key]));
-	        }
-	        return ret;
+	    objectOf: function objectOf(path, isRequired, generator, inferredType, config) {
+	        // TODO(jlfwong): Maybe try to generate here? Not clear how frequently
+	        // this will be useful.
+	        return randomMaybe(isRequired, {}, config);
 	    },
-	    arrayOf: function arrayOf(path, isRequired, generator, inferredType, length) {
-	        return generateValueForType.staticDefaults.array(path, isRequired, generator, inferredType, length, inferredType.args[0]);
-	    },
-	    objectOf: function objectOf(path, isRequired, generator, inferredType, length, keyGenerator) {
-	        return generateValueForType.staticDefaults.object(path, isRequired, generator, inferredType, length, inferredType.args[0], keyGenerator);
-	    },
-	    shape: function shape(path, isRequired, generator, inferredType) {
-	        if (!isRequired) {
-	            return null;
-	        }
+	    shape: function shape(path, isRequired, generator, inferredType, config) {
 	        var ret = {};
 	        var shapeTypes = inferredType.args[0];
 	        for (var key in shapeTypes) {
@@ -502,85 +507,73 @@ module.exports =
 	            }
 	            ret[key] = generator(shapeTypes[key], path.concat([key]));
 	        }
-	        return ret;
-	    }
-	};
-
-	var randomMaybe = function randomMaybe(isRequired, value) {
-	    // If the prop is not required, return null 1/5 of the time.
-	    if (!isRequired && Math.random() < 0.2) {
+	        return randomMaybe(isRequired, ret, config);
+	    },
+	    unknown: function unknown(path, isRequired, generator, inferredType, config) {
 	        return null;
+	    },
+	    any: function any() {
+	        return generators.string.apply(generators, arguments);
+	    },
+	    node: function node() {
+	        return generators.string.apply(generators, arguments);
+	    },
+	    element: function element() {
+	        return generators.string.apply(generators, arguments);
+	    },
+	    oneOf: function oneOf(path, isRequired, generator, inferredType, config) {
+	        return randomMaybe(isRequired, config.chooseItemFromList(inferredType.args[0]), config);
+	    },
+	    oneOfType: function oneOfType(path, isRequired, generator, inferredType, config) {
+	        var chosenType = config.chooseItemFromList(inferredType.args[0]);
+	        return randomMaybe(isRequired, generator(chosenType, path), config);
+	    },
+	    func: function func(path, isRequired, generator, inferredType, config) {
+	        return randomMaybe(isRequired, function () {
+	            return console.log.apply(console, arguments);
+	        }, config);
 	    }
-	    return value;
 	};
 
 	var randomChoice = function randomChoice(list) {
 	    return list[Math.floor(Math.random() * list.length)];
 	};
 
-	// TODO(jlfwong): This is a little crazy -- it might be better to only allow
-	// overriding of null probability, strings, numbers, booleans, and lengths of
-	// things.
-	//
-	// This also might be less crazy if I switch to object args instead of
-	// positional.
-	generateValueForType.randomDefaults = {
-	    string: function string(path, isRequired) {
-	        return randomMaybe(isRequired, [randomChoice(ADJECTIVES_1), randomChoice(ADJECTIVES_2), randomChoice(ANIMALS)].join(' '));
-	    },
-	    number: function number(path, isRequired) {
-	        return randomMaybe(isRequired, Math.floor(Math.random() * 9));
-	    },
-	    bool: function bool(path, isRequired) {
-	        return randomMaybe(isRequired, Math.random() > 0.5);
-	    },
-	    array: function array(path, isRequired, generator, inferredType) {
-	        var length = arguments.length <= 4 || arguments[4] === undefined ? 1 : arguments[4];
-	        var childType = arguments.length <= 5 || arguments[5] === undefined ? null : arguments[5];
-
-	        return randomMaybe(isRequired, generateValueForType.staticDefaults.array(path, true, generator, inferredType, Math.floor(Math.random() * 9), childType));
-	    },
-	    object: function object(path, isRequired, generator, inferredType) {
-	        var length = arguments.length <= 4 || arguments[4] === undefined ? 1 : arguments[4];
-	        var childType = arguments.length <= 5 || arguments[5] === undefined ? null : arguments[5];
-	        var keyGenerator = arguments.length <= 6 || arguments[6] === undefined ? function () {
-	            return 'key';
-	        } : arguments[6];
-
-	        return randomMaybe(isRequired, generateValueForType.staticDefaults.object(path, true, generator, inferredType, Math.floor(Math.random() * 9), childType, keyGenerator));
-	    },
-	    arrayOf: function arrayOf(path, isRequired, generator, inferredType, length) {
-	        return generateValueForType.randomDefaults.array(path, isRequired, generator, inferredType, length, inferredType.args[0]);
-	    },
-	    objectOf: function objectOf(path, isRequired, generator, inferredType, length, keyGenerator) {
-	        return generateValueForType.randomDefaults.object(path, isRequired, generator, inferredType, length, inferredType.args[0], keyGenerator);
-	    },
-	    shape: function shape(path, isRequired) {
-	        var _generateValueForType$staticDefaults;
-
-	        for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-	            args[_key2 - 2] = arguments[_key2];
+	var randomConfig = {
+	    generateString: function generateString(path) {
+	        if (path.length > 0) {
+	            var _name = ('' + path[path.length - 1]).toLowerCase();
+	            if (_name.indexOf('color') !== -1) {
+	                return randomChoice(['red', 'green', 'blue']);
+	            } else if (_name.indexOf('url') !== -1) {
+	                return randomChoice(['http://lorempixel.com/800/500/city/', 'http://lorempixel.com/800/500/cats/', 'http://lorempixel.com/800/500/nature/']);
+	            } else if (_name.indexOf('href') !== -1) {
+	                return randomChoice(['https://www.khanacademy.org', 'https://google.com']);
+	            }
 	        }
-
-	        return randomMaybe(isRequired, (_generateValueForType$staticDefaults = generateValueForType.staticDefaults).shape.apply(_generateValueForType$staticDefaults, [path, true].concat(args)));
+	        return [randomChoice(ADJECTIVES_1), randomChoice(ADJECTIVES_2), randomChoice(ANIMALS)].join(' ');
 	    },
-	    oneOf: function oneOf(path, isRequired, generator, inferredType) {
-	        return randomMaybe(isRequired, randomChoice(inferredType.args[0]));
+	    generateNumber: function generateNumber() {
+	        return Math.floor(Math.random() * 50 + 20);
 	    },
-	    func: function func(path, isRequired, generator, inferredType) {
-	        return randomMaybe(isRequired, function () {});
-	    }
+	    generateBool: function generateBool() {
+	        return Math.random() < 0.5;
+	    },
+	    chooseItemFromList: function chooseItemFromList(list) {
+	        return randomChoice(list);
+	    },
+	    chooseListLength: function chooseListLength() {
+	        return Math.floor(Math.random() * 4) + 2;
+	    },
+	    nullProbability: 0.0
 	};
 
 	// TODO(jlfwong): Reorganize this to avoid the Object.assign
 	// call on every value generation.
 	var generateRandomValueForType = function generateRandomValueForType(inferredType) {
 	    var path = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
-	    var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
-	    var fullConfig = {};
-	    Object.assign(fullConfig, generateValueForType.staticDefaults, generateValueForType.randomDefaults, config);
-	    return _generateValue(inferredType, path, fullConfig);
+	    return generateValueForType(inferredType, path, randomConfig);
 	};
 
 	var ADJECTIVES_1 = ['Agreeable', 'Brave', 'Calm', 'Delightful', 'Eager', 'Faithful', 'Gentle', 'Happy', 'Jolly', 'Kind', 'Lively', 'Nice', 'Obedient', 'Proud', 'Relieved', 'Silly', 'Thankful', 'Victorious', 'Witty', 'Zealous'];
