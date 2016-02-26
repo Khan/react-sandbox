@@ -74,9 +74,30 @@ const addFixture = (props) => {
     };
 };
 
+/**
+ * Open the modal to edit a fixture field at the given cursor.
+ */
+const openModal = (cursor) => {
+    return {
+        type: constants.OPEN_MODAL,
+        cursor
+    };
+};
+
+/**
+ * Close the modal.
+ */
+const closeModal = () => {
+    return {
+        type: constants.CLOSE_MODAL
+    };
+}
+
 module.exports = {
     loadComponentList,
     selectComponent,
     updateFixture,
     addFixture,
+    openModal,
+    closeModal
 };

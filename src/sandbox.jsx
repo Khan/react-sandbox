@@ -13,47 +13,16 @@
 //  - Tests
 
 const React = require("react");
-const { Provider, connect } = require("react-redux");
+const { Provider } = require("react-redux");
 const { StyleSheet, css } = require("aphrodite");
 
 const PropTypeTools = require("./prop-type-tools.js");
-const SandboxDisplay = require("./sandbox-display.jsx");
+const EditorModalContainer = require("./editor-modal-container.jsx");
+const SandboxDisplayContainer = require("./sandbox-display-container.jsx");
 const actions = require("./actions.js");
 const createSandboxStore = require("./create-sandbox-store.js");
 
 const RP = React.PropTypes;
-
-const mapStateToProps = (state) => {
-    return {
-        componentList: state.componentList,
-        selectedComponent: state.selectedComponent,
-    };
-};
-
-const mapDispatchToProps = (dispatch, ownProps) => {
-    return {
-        onComponentSelect: (key) => {
-            dispatch(
-                actions.selectComponent(
-                    key,
-                    ownProps.getComponentReference,
-                    ownProps.getFixtureListReference));
-        },
-
-        onFixtureUpdate: (...args) => {
-            dispatch(actions.updateFixture(...args));
-        },
-
-        onFixtureAdd: (...args) => {
-            dispatch(actions.addFixture(...args));
-        },
-    };
-};
-
-const ConnectedSandboxDisplay = connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(SandboxDisplay);
 
 const patchReactWithFakeErrorBoundaries = () => {
     // We patch React.createClass as a temporary work around for the
@@ -184,11 +153,14 @@ const Sandbox = React.createClass({
         const {getComponentReference, getFixtureListReference} = this.props;
 
         return <Provider store={this.store}>
-            <ConnectedSandboxDisplay
-                getComponentReference={getComponentReference}
-                getFixtureListReference={getFixtureListReference}
-                generator={PropTypeTools.generateRandomValueForType}
-            />
+            <div>
+                <EditorModalContainer />
+                <SandboxDisplayContainer
+                    getComponentReference={getComponentReference}
+                    getFixtureListReference={getFixtureListReference}
+                    generator={PropTypeTools.generateRandomValueForType}
+                />
+            </div>
         </Provider>;
     },
 });

@@ -27,16 +27,6 @@ const debounce = (fn, wait) => {
     };
 };
 
-const promptForNewJSVal = (value, onChange, cursor) => {
-    const promptVal = prompt('Set JS value', serializeToJS(value))
-
-    if (promptVal != null) {
-        // Wrap eval in parens to force functions to be functions expressions
-        // instead of function definitions.
-        onChange(cursor, eval(`(${promptVal})`));
-    }
-};
-
 const DebouncedInput = React.createClass({
     propTypes: {
         onChange: RP.func.isRequired,
@@ -130,7 +120,7 @@ const FIELD_RENDERERS = (() => {
     };
 
     const arrayOf = ({name, value, cursor, type,
-                      onChange, ancestorValid}) => {
+                      onChange, onRequestEdit, ancestorValid}) => {
         const arrayVal = value || [];
 
         return <div>
@@ -153,6 +143,7 @@ const FIELD_RENDERERS = (() => {
                             type={type.args[0]}
                             value={item}
                             onChange={onChange}
+                            onRequestEdit={onRequestEdit}
                             cursor={cursor.concat([index])}
                             ancestorValid={ancestorValid}
                         />
@@ -172,7 +163,8 @@ const FIELD_RENDERERS = (() => {
         </div>;
     };
 
-    const shape = ({name, value, type, cursor, onChange, ancestorValid}) => {
+    const shape = ({name, value, type, cursor,
+                    onRequestEdit, onChange, ancestorValid}) => {
         const shape = type.args[0];
         const objVal = value || {};
         return <div>
@@ -183,6 +175,7 @@ const FIELD_RENDERERS = (() => {
                         type={shape[childKey]}
                         value={objVal[childKey]}
                         onChange={onChange}
+                        onRequestEdit={onRequestEdit}
                         cursor={cursor.concat([childKey])}
                         ancestorValid={ancestorValid}
                     />
@@ -191,15 +184,15 @@ const FIELD_RENDERERS = (() => {
         </div>;
     };
 
-    const wrapWithUpdater = (content, {value, onChange, cursor}) => {
+    const wrapWithUpdater = (content, {onRequestEdit, cursor}) => {
         return <span
-            onClick={() => promptForNewJSVal(value, onChange, cursor)}
+            onClick={() => onRequestEdit(cursor)}
         >
             {content}
         </span>;
     };
 
-    const unknown = ({value, onChange, cursor}) => {
+    const unknown = ({value, onRequestEdit, cursor}) => {
         let content = '';
         try {
             content = JSON.stringify(value);
@@ -207,16 +200,16 @@ const FIELD_RENDERERS = (() => {
             content = value.toString();
         }
 
-        return wrapWithUpdater(content, {value, onChange, cursor});
+        return wrapWithUpdater(content, {onRequestEdit, cursor});
     };
 
     const instanceOf = ({value}) => {
         return value == null ? '(null)' : value.toString();
     };
 
-    const func = ({value, onChange, cursor}) => {
+    const func = ({value, onRequestEdit, cursor}) => {
         const content = value == null ? '(null)' : value.toString();
-        return wrapWithUpdater(content, {value, onChange, cursor});
+        return wrapWithUpdater(content, {onRequestEdit, cursor});
     };
 
     const nullable = (inputType, props) => {
@@ -269,6 +262,8 @@ const SinglePropEditor = React.createClass({
 
         onChange: RP.func.isRequired,
 
+        onRequestEdit: RP.func.isRequired,
+
         // The type of the prop to edit. This will match the values of return
         // type of inferTypes.
         type: RP.oneOfType([
@@ -292,9 +287,9 @@ const SinglePropEditor = React.createClass({
         };
     },
 
-    handleLabelClick() {
-        const {value, cursor, onChange} = this.props;
-        promptForNewJSVal(value, onChange, cursor);
+    handleRequestEdit() {
+        const {onRequestEdit, cursor} = this.props;
+        onRequestEdit(cursor);
     },
 
     render() {
@@ -312,7 +307,7 @@ const SinglePropEditor = React.createClass({
 
         const props = {
             ...this.props,
-            ancestorValid: valid,
+            ancestorValid: valid
         };
 
         const fieldEditor = type.required ?
@@ -324,7 +319,7 @@ const SinglePropEditor = React.createClass({
         >
             <span
                 className={css(styles.nameLabel)}
-                onClick={this.handleLabelClick}
+                onClick={this.handleRequestEdit}
             >
                 {name}
             </span>

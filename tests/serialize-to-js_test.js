@@ -40,6 +40,6 @@ describe('serializeToJS', () => {
         var C = function(x) {
             this.x = x;
         };
-        check(new C(1), '<<custom object>>');
+        check(new C(1), '"<<object w/ custom constructor>>"');
     });
 });

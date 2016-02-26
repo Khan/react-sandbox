@@ -22,4 +22,6 @@ module.exports = makeConstants({
     FIXTURES_DID_LOAD: null,
     UPDATE_FIXTURE: null,
     ADD_FIXTURE: null,
+    OPEN_MODAL: null,
+    CLOSE_MODAL: null,
 });

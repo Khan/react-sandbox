@@ -92,6 +92,7 @@ describe('createSandboxStore', () => {
 
     it('initializes sensibly', () => {
         return assertStore({
+            modalEditorCursor: null,
             componentList: null,
             selectedComponent: null,
         });
@@ -101,6 +102,7 @@ describe('createSandboxStore', () => {
         store.dispatch(actions.loadComponentList(getComponentList));
 
         return assertStore({
+            modalEditorCursor: null,
             componentList: null,
             selectedComponent: null,
         }).then(() => {
@@ -110,6 +112,7 @@ describe('createSandboxStore', () => {
             ]);
 
             return assertStore({
+                modalEditorCursor: null,
                 componentList: [
                     ['big-spinner.jsx', 'BigSpinner'],
                     ['small-spinner.jsx', 'SmallSpinner'],
@@ -125,6 +128,7 @@ describe('createSandboxStore', () => {
                                                getFixtureListReference));
 
         return assertStore({
+            modalEditorCursor: null,
             componentList: null,
             selectedComponent: {
                 key: 'big-spinner.jsx',
@@ -136,6 +140,7 @@ describe('createSandboxStore', () => {
             resolveComponentReference(SomeComponent);
 
             return assertStore({
+                modalEditorCursor: null,
                 componentList: null,
                 selectedComponent: {
                     key: 'big-spinner.jsx',
@@ -148,6 +153,7 @@ describe('createSandboxStore', () => {
             resolveFixtureListReference(someFixtures);
 
             return assertStore({
+                modalEditorCursor: null,
                 componentList: null,
                 selectedComponent: {
                     key: 'big-spinner.jsx',
@@ -167,6 +173,7 @@ describe('createSandboxStore', () => {
         resolveFixtureListReference(someFixtures);
 
         return assertStore({
+            modalEditorCursor: null,
             componentList: null,
             selectedComponent: {
                 key: 'big-spinner.jsx',
@@ -178,6 +185,7 @@ describe('createSandboxStore', () => {
             store.dispatch(actions.updateFixture([0, 'a'], 2));
 
             return assertStore({
+                modalEditorCursor: null,
                 componentList: null,
                 selectedComponent: {
                     key: 'big-spinner.jsx',
@@ -199,6 +207,7 @@ describe('createSandboxStore', () => {
         resolveFixtureListReference(someFixtures);
 
         return assertStore({
+            modalEditorCursor: null,
             componentList: null,
             selectedComponent: {
                 key: 'big-spinner.jsx',
@@ -210,6 +219,7 @@ describe('createSandboxStore', () => {
             store.dispatch(actions.addFixture({a: 2}));
 
             return assertStore({
+                modalEditorCursor: null,
                 componentList: null,
                 selectedComponent: {
                     key: 'big-spinner.jsx',
@@ -219,6 +229,23 @@ describe('createSandboxStore', () => {
                         instances: [{a: 1}, {a: 2}],
                     },
                 },
+            });
+        });
+    });
+
+    it('can open and close the modal', () => {
+        store.dispatch(actions.openModal([0, 'a']));
+        return assertStore({
+            modalEditorCursor: [0, 'a'],
+            componentList: null,
+            selectedComponent: null,
+        }).then(() => {
+            store.dispatch(actions.closeModal());
+
+            return assertStore({
+                modalEditorCursor: null,
+                componentList: null,
+                selectedComponent: null,
             });
         });
     });

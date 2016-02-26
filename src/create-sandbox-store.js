@@ -88,6 +88,17 @@ const selectedComponent = (state = null, action) => {
     return state;
 };
 
+const modalEditorCursor = (state = null, action) => {
+    switch (action.type) {
+        case constants.OPEN_MODAL:
+            return action.cursor;
+
+        case constants.CLOSE_MODAL:
+            return null;
+    }
+    return state;
+};
+
 // From http://redux.js.org/docs/api/applyMiddleware.html
 function logger({ getState }) {
     return (next) => (action) => {
@@ -107,6 +118,7 @@ function logger({ getState }) {
 const store = combineReducers({
     componentList,
     selectedComponent,
+    modalEditorCursor,
 });
 
 const createSandboxStore = (includerLogger = true) => {

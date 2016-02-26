@@ -50,6 +50,9 @@ const SandboxInstance = React.createClass({
         // Called with the new prop values on update
         onFixtureUpdate: RP.func.isRequired,
 
+        // Called with the cursor to the prop to edit.
+        onRequestEdit: RP.func.isRequired,
+
         // The props for the component
         props: RP.object.isRequired,
 
@@ -64,6 +67,7 @@ const SandboxInstance = React.createClass({
             props,
             callbacksToLog,
             onFixtureUpdate,
+            onRequestEdit,
             cursor,
             types,
         } = this.props;
@@ -86,6 +90,7 @@ const SandboxInstance = React.createClass({
                     component={component}
                     componentProps={propsToPass}
                     onChange={onFixtureUpdate}
+                    onRequestEdit={onRequestEdit}
                     cursor={cursor}
                     types={types}
                 />

@@ -27,15 +27,25 @@ const PropEditor = React.createClass({
         // Invoked with new values of props as they change
         onChange: RP.func.isRequired,
 
+        // Invoked with the cursor of the props to edit
+        onRequestEdit: RP.func.isRequired,
+
         // The type of the prop to edit. This will match the return
         // type of inferTypesForComponent.
         types: RP.objectOf(SinglePropEditor.propTypes.type).isRequired,
+    },
+
+    handleEditRequest() {
+        const {onRequestEdit, cursor} = this.props;
+
+        onRequestEdit(cursor);
     },
 
     render() {
         const {
             componentProps,
             onChange,
+            onRequestEdit,
             cursor,
             types,
         } = this.props;
@@ -47,11 +57,18 @@ const PropEditor = React.createClass({
                 type={types[key]}
                 value={componentProps[key]}
                 onChange={onChange}
+                onRequestEdit={onRequestEdit}
                 cursor={cursor.concat([key])}
             />;
         });
 
         return <div>
+            <div>
+                <button onClick={this.handleEditRequest}>
+                    Edit props as JavaScript
+                </button>{' '}
+                or click on a prop label to edit any part.
+            </div>
             {content.length > 0 ? content : "No propTypes declared!"}
         </div>;
     },

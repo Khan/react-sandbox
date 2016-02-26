@@ -23,7 +23,7 @@ const serializeToJS = (val) => {
     }
     if (typeof val === 'object') {
         if (!isPlainObject(val)) {
-            return '<<custom object>>';
+            return '"<<object w/ custom constructor>>"';
         }
 
         const childKeys = Object.keys(val).filter(

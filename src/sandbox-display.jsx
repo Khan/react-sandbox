@@ -43,6 +43,9 @@ const SandboxDisplay = React.createClass({
         // Called with the path and prop values of the fixture to update.
         onFixtureUpdate: RP.func.isRequired,
 
+        // Called with the cursor to the prop to edit.
+        onRequestEdit: RP.func.isRequired,
+
         selectedComponent: RP.shape({
             // A key identifying the currently selected component
             key: RP.string.isRequired,
@@ -76,6 +79,7 @@ const SandboxDisplay = React.createClass({
             selectedComponent,
             onComponentSelect,
             onFixtureUpdate,
+            onRequestEdit,
         } = this.props;
 
         if (!componentList) {
@@ -109,6 +113,7 @@ const SandboxDisplay = React.createClass({
                                     types={selectedComponent.types}
                                     callbacksToLog={fixtures.log || emptyList}
                                     onFixtureUpdate={onFixtureUpdate}
+                                    onRequestEdit={onRequestEdit}
                                 />;
                             })
                             :
